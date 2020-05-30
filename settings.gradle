@@ -1,2 +1,3 @@
 rootProject.name='Killswitch'
 include ':app'
+include ':killswitch-io-ble'
