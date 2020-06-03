@@ -6,9 +6,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
+import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_BIOMETRICS;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_FEATURES_NONE;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS;
+import static android.app.admin.DevicePolicyManager.WIPE_EXTERNAL_STORAGE;
 import static android.app.admin.DevicePolicyManager.WIPE_SILENTLY;
 import static com.github.mikelambert.killswitch.common.Intents.TRIGGER_ACTION_REBOOT;
 import static com.github.mikelambert.killswitch.common.Intents.TRIGGER_ACTION_WIPE;
@@ -19,19 +21,19 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     private final ComponentName adminComponentName;
     private String action;
     private boolean armed;
+    private boolean wipeSd;
 
     public KillswitchDeviceAdministratorImpl(Context context) {
         this.context = context;
-        // Prepare to work with the DPM
         devicePolicyManager = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
         adminComponentName = new ComponentName(context, KillswitchAdminReceiver.class);
     }
 
     @Override
     public void onTrigger(int flags) {
-        if (isArmed() && isAdminActive() && TRIGGER_ACTION_WIPE.equals(action)) {
-            devicePolicyManager.wipeData(WIPE_SILENTLY);
-        } else if (isArmed() && isAdminActive() && TRIGGER_ACTION_REBOOT.equals(action)) {
+        if (isArmed() && TRIGGER_ACTION_WIPE.equals(action)) {
+            devicePolicyManager.wipeData((wipeSd ? WIPE_EXTERNAL_STORAGE : 0) | WIPE_SILENTLY);
+        } else if (isArmed() && TRIGGER_ACTION_REBOOT.equals(action)) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 devicePolicyManager.reboot(adminComponentName);
             } else {
@@ -53,7 +55,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
 
     @Override
     public void onDisarmed() {
-        if (isAdminActive()) {
+        if (isArmed()) {
             armed = false;
             enableKeyguardFeatures();
         }
@@ -66,7 +68,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
 
     @Override
     public void onEnabled() {
-        disableKeyGuardFeatures();
+        requireStorageEncryption();
     }
 
     @Override
@@ -76,12 +78,13 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
 
     @Override
     public void onStarted() {
+        onEnabled();
         onArmed();
     }
 
     @Override
     public boolean isArmed() {
-        return armed;
+        return armed && isAdminActive();
     }
 
     @Override
@@ -91,7 +94,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
 
     @Override
     public void disable() {
-        if (!armed && isAdminActive()){
+        if (!isArmed()){
             devicePolicyManager.removeActiveAdmin(adminComponentName);
         }
     }
@@ -116,4 +119,16 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
         return devicePolicyManager.isAdminActive(adminComponentName);
     }
 
+    private void requireStorageEncryption() {
+        if (isAdminActive()){
+            int ses = devicePolicyManager.getStorageEncryptionStatus();
+            switch(ses){
+                case ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY:
+                    devicePolicyManager.setStorageEncryption(adminComponentName, true);
+                    break;
+                default:
+                    return;
+            }
+        }
+    }
 }
