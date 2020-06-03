@@ -1,4 +1,4 @@
-package com.github.mikelambert.killswitch.common;
+package com.github.mikelambert.killswitch;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -11,10 +11,12 @@ import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_DEF
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_BIOMETRICS;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_FEATURES_NONE;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS;
+import static android.app.admin.DevicePolicyManager.LEAVE_ALL_SYSTEM_APPS_ENABLED;
+import static android.app.admin.DevicePolicyManager.SKIP_SETUP_WIZARD;
 import static android.app.admin.DevicePolicyManager.WIPE_EXTERNAL_STORAGE;
 import static android.app.admin.DevicePolicyManager.WIPE_SILENTLY;
-import static com.github.mikelambert.killswitch.common.Intents.TRIGGER_ACTION_REBOOT;
-import static com.github.mikelambert.killswitch.common.Intents.TRIGGER_ACTION_WIPE;
+import static com.github.mikelambert.killswitch.Intents.TRIGGER_ACTION_REBOOT;
+import static com.github.mikelambert.killswitch.Intents.TRIGGER_ACTION_WIPE;
 
 public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdministrator {
     private final Context context;
@@ -53,7 +55,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
         if (isAdminActive()) {
             armed = true;
             Log.v(this.getClass().getSimpleName(), "ARMED: securing keyguard");
-            disableKeyGuardFeatures();
+            //disableKeyGuardFeatures();
             Log.v(this.getClass().getSimpleName(), "ARMED: locking screen");
             devicePolicyManager.lockNow();
         }
@@ -64,7 +66,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
         if (isArmed()) {
             armed = false;
             Log.v(this.getClass().getSimpleName(), "DISARMED: relaxing keyguard");
-            enableKeyguardFeatures();
+            //enableKeyguardFeatures();
         }
     }
 
@@ -75,8 +77,10 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
 
     @Override
     public void onEnabled() {
-        Log.v(this.getClass().getSimpleName(), "ENABLED: ensuring device encryption");
-        requireStorageEncryption();
+        if (isAdminActive()){
+            Log.v(this.getClass().getSimpleName(), "ENABLED: ensuring device encryption");
+            requireStorageEncryption();
+        }
     }
 
     @Override
@@ -88,6 +92,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     public void onStarted() {
         Log.v(this.getClass().getSimpleName(), "STARTUP");
         onEnabled();
+        // TODO: check state
         onArmed();
     }
 

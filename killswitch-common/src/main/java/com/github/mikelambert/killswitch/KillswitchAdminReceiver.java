@@ -1,4 +1,4 @@
-package com.github.mikelambert.killswitch.common;
+package com.github.mikelambert.killswitch;
 
 import android.app.admin.DeviceAdminReceiver;
 import android.content.Context;

@@ -1,4 +1,4 @@
-package com.github.mikelambert.killswitch.common;
+package com.github.mikelambert.killswitch;
 
 import android.app.Application;
 import android.content.BroadcastReceiver;
@@ -7,9 +7,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 
-import static com.github.mikelambert.killswitch.common.Intents.EVENT_KILLSWITCH_ARMED;
-import static com.github.mikelambert.killswitch.common.Intents.EVENT_KILLSWITCH_DISARMED;
-import static com.github.mikelambert.killswitch.common.Intents.EVENT_KILLSWITCH_TRIGGER;
+import static com.github.mikelambert.killswitch.Intents.EVENT_KILLSWITCH_ARMED;
+import static com.github.mikelambert.killswitch.Intents.EVENT_KILLSWITCH_DISARMED;
+import static com.github.mikelambert.killswitch.Intents.EVENT_KILLSWITCH_TRIGGER;
 
 public class KillswitchApplication extends Application {
     private static class KillswitchEventsReceiver extends BroadcastReceiver {
@@ -38,6 +38,7 @@ public class KillswitchApplication extends Application {
         killswitchDeviceAdministrator = new KillswitchDeviceAdministratorImpl(this);
         killswitchDeviceAdministrator.onStarted();
         registerEventsReceiver();
+        registerReceiver(new KillswitchMulticlickReceiver(), new IntentFilter(Intent.ACTION_SCREEN_ON));
     }
 
     @Override

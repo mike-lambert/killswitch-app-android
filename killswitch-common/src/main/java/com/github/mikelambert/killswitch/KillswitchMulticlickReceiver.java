@@ -1,4 +1,4 @@
-package com.github.mikelambert.killswitch.common;
+package com.github.mikelambert.killswitch;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -7,7 +7,7 @@ import android.util.Log;
 
 import java.util.Objects;
 
-import static com.github.mikelambert.killswitch.common.Intents.FLAG_KILLSWITCH_TRIGGER_RED_BUTTON;
+import static com.github.mikelambert.killswitch.Intents.FLAG_KILLSWITCH_TRIGGER_RED_BUTTON;
 
 public class KillswitchMulticlickReceiver extends BroadcastReceiver {
     private int count;
@@ -25,7 +25,7 @@ public class KillswitchMulticlickReceiver extends BroadcastReceiver {
             count++;
             last = now;
         }
-        Log.v(this.getClass().getSimpleName(), intent.getAction() + ": " + count + "; last: " + (now - last));
+        Log.v(this.getClass().getSimpleName(), intent.getAction() + ": " + count);
         if (count >= 5){
             count = 0;
             last = 0;
