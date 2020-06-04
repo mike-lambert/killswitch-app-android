@@ -1,9 +1,11 @@
 package com.github.mikelambert.killswitch;
 
+import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.hardware.biometrics.BiometricPrompt;
 import android.os.Build;
 import android.util.Log;
 
@@ -30,23 +32,18 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
         this.context = context;
         devicePolicyManager = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
         adminComponentName = new ComponentName(context, KillswitchAdminReceiver.class);
+        action = TRIGGER_ACTION_WIPE;
     }
 
     @Override
     public void onTrigger(int flags) {
         if (isArmed() && TRIGGER_ACTION_WIPE.equals(action)) {
             Log.v(this.getClass().getSimpleName(), "WIPING DEVICE");
-            devicePolicyManager.wipeData((wipeSd ? WIPE_EXTERNAL_STORAGE : 0) | WIPE_SILENTLY);
-        } else if (isArmed() && TRIGGER_ACTION_REBOOT.equals(action)) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                Log.v(this.getClass().getSimpleName(), "REBOOTING: DPM");
-                devicePolicyManager.reboot(adminComponentName);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                devicePolicyManager.wipeData((wipeSd ? WIPE_EXTERNAL_STORAGE : 0), "Killswitch engaged"/* | WIPE_SILENTLY*/);
             } else {
-                Log.v(this.getClass().getSimpleName(), "REBOOTING: PS");
-                Intents.reboot(context, false);
+                devicePolicyManager.wipeData(0);
             }
-        } else {
-            // not matched
         }
     }
 
@@ -56,6 +53,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
             armed = true;
             Log.v(this.getClass().getSimpleName(), "ARMED: securing keyguard");
             //disableKeyGuardFeatures();
+            forceKeyguard();
             Log.v(this.getClass().getSimpleName(), "ARMED: locking screen");
             devicePolicyManager.lockNow();
         }
@@ -80,6 +78,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
         if (isAdminActive()){
             Log.v(this.getClass().getSimpleName(), "ENABLED: ensuring device encryption");
             requireStorageEncryption();
+            forceKeyguard();
         }
     }
 
@@ -147,5 +146,20 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
                     return;
             }
         }
+    }
+
+    private void forceKeyguard() {
+        if (isAdminActive()) {
+            if (!getKeyguardManager().isDeviceSecure()) {
+                Intent k = getKeyguardManager().createConfirmDeviceCredentialIntent("Killswitch", "Securing device disarming");
+                if (k == null){
+                    // TODO: toast
+                }
+            }
+        }
+    }
+
+    private KeyguardManager getKeyguardManager() {
+        return (KeyguardManager)context.getApplicationContext().getSystemService(Context.KEYGUARD_SERVICE);
     }
 }

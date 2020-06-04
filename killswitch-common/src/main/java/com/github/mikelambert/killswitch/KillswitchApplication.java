@@ -39,6 +39,7 @@ public class KillswitchApplication extends Application {
         killswitchDeviceAdministrator.onStarted();
         registerEventsReceiver();
         registerReceiver(new KillswitchMulticlickReceiver(), new IntentFilter(Intent.ACTION_SCREEN_ON));
+        registerReceiver(new KillswitchMulticlickReceiver(), new IntentFilter(Intent.ACTION_SCREEN_OFF));
     }
 
     @Override
