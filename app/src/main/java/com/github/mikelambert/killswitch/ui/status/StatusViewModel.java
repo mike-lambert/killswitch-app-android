@@ -4,16 +4,18 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.github.mikelambert.killswitch.model.KillswitchStatus;
+
 public class StatusViewModel extends ViewModel {
 
-    private MutableLiveData<String> mText;
+    private MutableLiveData<KillswitchStatus> statusData;
 
     public StatusViewModel() {
-        mText = new MutableLiveData<>();
-        mText.setValue("This is status fragment");
+        statusData = new MutableLiveData<>();
+        statusData.setValue(new KillswitchStatus());
     }
 
-    public LiveData<String> getText() {
-        return mText;
+    public LiveData<KillswitchStatus> getProducer() {
+        return statusData;
     }
 }

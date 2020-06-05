@@ -32,7 +32,8 @@
         android:layout_alignBottom="@+id/toggle_engage"
         android:text="@string/label_killswitch_disarmed"
         android:textStyle="bold"
-        android:textSize="24dp"/>
+        android:textSize="24dp"
+        android:id="@+id/status_killswitch"/>
     <Space
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -62,5 +63,6 @@
         android:layout_alignBottom="@+id/toggle_activate"
         android:text="@string/label_admin_inactive"
         android:textStyle="bold"
-        android:textSize="24dp"/>
+        android:textSize="24dp"
+        android:id="@+id/status_admin"/>
 </RelativeLayout>
