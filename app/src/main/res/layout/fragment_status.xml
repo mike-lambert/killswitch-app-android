@@ -1,22 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.status.StatusFragment">
-
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/spacer_bottom"/>
+    <ToggleButton
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_above="@+id/spacer_bottom"
+        android:textOff="@string/arm"
+        android:textOn="@string/disarm"
+        android:id="@+id/toggle_engage"
+        android:minWidth="50dp"/>
     <TextView
-        android:id="@+id/text_home"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignTop="@+id/toggle_engage"
+        android:text="@string/label_hint_killswitch"
+        android:id="@+id/label_killswitch_hint"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/label_admin_hint"
+        android:layout_alignBottom="@+id/toggle_engage"
+        android:text="@string/label_killswitch_disarmed"
+        android:textStyle="bold"
+        android:textSize="24dp"/>
+    <Space
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:textAlignment="center"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+        android:layout_above="@+id/toggle_engage"
+        android:minHeight="60dp"
+        android:id="@+id/space_1"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/space_1"
+        android:layout_alignTop="@id/toggle_activate"
+        android:text="@string/label_hint_admin"
+        android:id="@+id/label_admin_hint"/>
+    <ToggleButton
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/space_1"
+        android:layout_alignParentRight="true"
+        android:id="@+id/toggle_activate"
+        android:textOff="@string/enable"
+        android:textOn="@string/disable"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/space_1"
+        android:layout_alignRight="@+id/label_admin_hint"
+        android:layout_alignBottom="@+id/toggle_activate"
+        android:text="@string/label_admin_inactive"
+        android:textStyle="bold"
+        android:textSize="24dp"/>
+</RelativeLayout>

@@ -2,4 +2,14 @@
     <string name="app_name">Killswitch</string>
     <string name="title_status">Status</string>
     <string name="title_devices">Devices</string>
+    <string name="disarm">Disarm</string>
+    <string name="arm">Engage</string>
+    <string name="enable">Gain admin</string>
+    <string name="disable">Revoke admin</string>
+    <string name="label_hint_admin">Administrator status</string>
+    <string name="label_hint_killswitch">Killswitch status</string>
+    <string name="label_admin_inactive">Inactive</string>
+    <string name="label_admin_active">Active</string>
+    <string name="label_killswitch_disarmed">Disarmed</string>
+    <string name="label_killswitch_engaged">Engaged</string>
 </resources>
