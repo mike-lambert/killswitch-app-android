@@ -116,6 +116,11 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
         return intent;
     }
 
+    @Override
+    public ComponentName getAdminComponentName() {
+        return adminComponentName;
+    }
+
     private void enableKeyguardFeatures() {
         devicePolicyManager.setKeyguardDisabledFeatures(adminComponentName, KEYGUARD_DISABLE_FEATURES_NONE);
     }
