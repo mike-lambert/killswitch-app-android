@@ -5,7 +5,6 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.hardware.biometrics.BiometricPrompt;
 import android.os.Build;
 import android.util.Log;
 
@@ -13,11 +12,7 @@ import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_DEF
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_BIOMETRICS;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_FEATURES_NONE;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS;
-import static android.app.admin.DevicePolicyManager.LEAVE_ALL_SYSTEM_APPS_ENABLED;
-import static android.app.admin.DevicePolicyManager.SKIP_SETUP_WIZARD;
 import static android.app.admin.DevicePolicyManager.WIPE_EXTERNAL_STORAGE;
-import static android.app.admin.DevicePolicyManager.WIPE_SILENTLY;
-import static com.github.mikelambert.killswitch.Intents.TRIGGER_ACTION_REBOOT;
 import static com.github.mikelambert.killswitch.Intents.TRIGGER_ACTION_WIPE;
 
 public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdministrator {
@@ -53,7 +48,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
             armed = true;
             Log.v(this.getClass().getSimpleName(), "ARMED: securing keyguard");
             //disableKeyGuardFeatures();
-            forceKeyguard();
+            //forceKeyguard();
             Log.v(this.getClass().getSimpleName(), "ARMED: locking screen");
             devicePolicyManager.lockNow();
         }
@@ -78,7 +73,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
         if (isAdminActive()){
             Log.v(this.getClass().getSimpleName(), "ENABLED: ensuring device encryption");
             requireStorageEncryption();
-            forceKeyguard();
+            //forceKeyguard();
         }
     }
 
@@ -92,7 +87,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
         Log.v(this.getClass().getSimpleName(), "STARTUP");
         onEnabled();
         // TODO: check state
-        onArmed();
+        //onArmed();
     }
 
     @Override
@@ -154,6 +149,8 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
                 Intent k = getKeyguardManager().createConfirmDeviceCredentialIntent("Killswitch", "Securing device disarming");
                 if (k == null){
                     // TODO: toast
+                } else {
+                    // TODO: keyguard
                 }
             }
         }
