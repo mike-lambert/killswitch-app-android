@@ -18,4 +18,8 @@ public class StatusViewModel extends ViewModel {
     public LiveData<KillswitchStatus> getProducer() {
         return statusData;
     }
+
+    public void post(KillswitchStatus data){
+        statusData.postValue(data);
+    }
 }

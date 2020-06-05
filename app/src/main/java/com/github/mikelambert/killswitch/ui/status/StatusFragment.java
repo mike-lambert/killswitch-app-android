@@ -11,7 +11,10 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
+import com.github.mikelambert.killswitch.KillswitchApplication;
+import com.github.mikelambert.killswitch.KillswitchDeviceAdministrator;
 import com.github.mikelambert.killswitch.R;
+import com.github.mikelambert.killswitch.model.KillswitchStatus;
 
 public class StatusFragment extends Fragment {
 
@@ -37,5 +40,17 @@ public class StatusFragment extends Fragment {
             statusKillswitch.setText(status.isKillswitchArmed() ? R.string.label_killswitch_engaged : R.string.label_killswitch_disarmed);
         });
         return root;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        refreshState();
+    }
+
+    private void refreshState() {
+        final KillswitchDeviceAdministrator entrypoint = KillswitchApplication.getInstance(getActivity()).getKillswitch();
+        final KillswitchStatus status = new KillswitchStatus(entrypoint.isEnabled(), entrypoint.isArmed());
+        statusViewModel.post(status);
     }
 }
