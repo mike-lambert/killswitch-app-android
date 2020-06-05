@@ -1,4 +1,4 @@
-package com.github.mikelambert.killswitch.ui.dashboard;
+package com.github.mikelambert.killswitch.ui.status;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -14,17 +14,17 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.github.mikelambert.killswitch.R;
 
-public class DashboardFragment extends Fragment {
+public class StatusFragment extends Fragment {
 
-    private DashboardViewModel dashboardViewModel;
+    private StatusViewModel statusViewModel;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        dashboardViewModel =
-                ViewModelProviders.of(this).get(DashboardViewModel.class);
-        View root = inflater.inflate(R.layout.fragment_dashboard, container, false);
-        final TextView textView = root.findViewById(R.id.text_dashboard);
-        dashboardViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
+        statusViewModel =
+                ViewModelProviders.of(this).get(StatusViewModel.class);
+        View root = inflater.inflate(R.layout.fragment_status, container, false);
+        final TextView textView = root.findViewById(R.id.text_home);
+        statusViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
             @Override
             public void onChanged(@Nullable String s) {
                 textView.setText(s);

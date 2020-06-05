@@ -7,14 +7,14 @@
 
     <fragment
         android:id="@+id/navigation_home"
-        android:name="com.github.mikelambert.killswitch.ui.home.HomeFragment"
+        android:name="com.github.mikelambert.killswitch.ui.status.StatusFragment"
         android:label="@string/title_status"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_status" />
 
     <fragment
         android:id="@+id/navigation_dashboard"
-        android:name="com.github.mikelambert.killswitch.ui.dashboard.DashboardFragment"
+        android:name="com.github.mikelambert.killswitch.ui.devices.DevicesFragment"
         android:label="@string/title_devices"
-        tools:layout="@layout/fragment_dashboard" />
+        tools:layout="@layout/fragment_devices" />
 
 </navigation>
