@@ -1,10 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.github.mikelambert.killswitch.common" >
+    package="com.github.mikelambert.killswitch" >
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application>
         <receiver android:name=".KillswitchAdminReceiver"
             android:label="Killswitch"
-            android:description="Killswitch allows you to wipe sensitive data on device"
             android:permission="android.permission.BIND_DEVICE_ADMIN">
             <meta-data android:name="android.app.device_admin"
                 android:resource="@xml/device_admin_sample" />

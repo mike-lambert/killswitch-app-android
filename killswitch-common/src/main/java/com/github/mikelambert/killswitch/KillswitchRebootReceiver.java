@@ -1,4 +1,4 @@
-package com.github.mikelambert.killswitch.common;
+package com.github.mikelambert.killswitch;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -10,7 +10,8 @@ public class KillswitchRebootReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         if(action != null) {
             if (action.equals(Intent.ACTION_BOOT_COMPLETED) ) {
-                // TODO: run killswitch infrastructure
+                KillswitchApplication.getInstance(context).getKillswitch().onStarted();
+                // TODO: recover state
             }
         }
     }

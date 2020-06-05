@@ -1,4 +1,4 @@
-package com.github.mikelambert.killswitch.common;
+package com.github.mikelambert.killswitch;
 
 import android.content.Context;
 import android.content.Intent;
@@ -11,7 +11,6 @@ public class Intents {
     public static final String EVENT_KILLSWITCH_ARMED = "com.github.mikelambert.killswitch.ACTION_ARMED";
     public static final String EVENT_KILLSWITCH_DISARMED = "com.github.mikelambert.killswitch.ACTION_DISARMED";
 
-    public static final String TRIGGER_ACTION_REBOOT = "REBOOT";
     public static final String TRIGGER_ACTION_WIPE = "WIPE";
 
     public static final int FLAG_KILLSWITCH_TRIGGER_RED_BUTTON = 1;
@@ -30,9 +29,5 @@ public class Intents {
 
     public static Intent createKillswitchDisarmedIntent() {
         return new Intent(EVENT_KILLSWITCH_DISARMED);
-    }
-
-    public static void reboot(Context context, boolean recovery){
-        ((PowerManager) Objects.requireNonNull(context.getSystemService(Context.POWER_SERVICE))).reboot( recovery ? "recovery" : null);
     }
 }
