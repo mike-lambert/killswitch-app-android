@@ -31,6 +31,7 @@ import static com.github.mikelambert.killswitch.Intents.FLAG_KILLSWITCH_TRIGGER_
 
 public class StatusFragment extends Fragment {
     public static final int REQUEST_CODE_INSTALL_ADMIN = 0x0000ADAD;
+    public static final int REQUEST_CODE_KEYGUARD = 0x0000DEAD;
 
     private StatusViewModel statusViewModel;
     private ToggleButton toggleEngage;
