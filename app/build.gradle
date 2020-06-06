@@ -8,8 +8,8 @@ android {
         applicationId "com.github.mikelambert.killswitch"
         minSdkVersion 14
         targetSdkVersion 29
-        versionCode 5
-        versionName "1.5"
+        versionCode 6
+        versionName "1.6"
         setProperty("archivesBaseName", "com.github.mikelambert.killswitch-$versionName")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
