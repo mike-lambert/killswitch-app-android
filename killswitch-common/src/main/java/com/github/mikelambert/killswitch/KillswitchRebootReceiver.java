@@ -12,7 +12,7 @@ public class KillswitchRebootReceiver extends BroadcastReceiver {
         if(action != null) {
             if (action.equals(Intent.ACTION_BOOT_COMPLETED) ) {
                 Log.v(this.getClass().getSimpleName(), "Reviving Killswitch ...");
-                KillswitchApplication.getInstance(context).getKillswitch().onSettingsUpdated();
+                KillswitchApplication.getInstance(context).getKillswitch().onSettingsUpdated(null);
             }
         }
     }

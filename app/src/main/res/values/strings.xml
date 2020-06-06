@@ -2,6 +2,7 @@
     <string name="app_name">Killswitch</string>
     <string name="title_status">Status</string>
     <string name="title_devices">Devices</string>
+    <string name="title_settings">Settings</string>
     <string name="disarm">Disarm</string>
     <string name="arm">Engage</string>
     <string name="enable">Gain admin</string>
@@ -14,5 +15,9 @@
     <string name="label_killswitch_disarmed">Disarmed</string>
     <string name="label_killswitch_engaged">Engaged</string>
     <string name="explanation">Killswitch allow you to engage wipe locally in device compromisal risk cases</string>
-    <string name="title_settings">Settings</string>
+    <!-- settings -->
+    <string name="label_wipe_sd">Wipe SD card</string>
+    <string name="label_trigger">Trigger wipe by</string>
+    <string name="label_trigger_multiclick">Power button multi-click</string>
+    <string name="label_click_count">Clicks to trigger</string>
 </resources>

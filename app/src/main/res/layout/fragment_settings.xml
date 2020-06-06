@@ -4,5 +4,48 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.settings.SettingsFragment">
-
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/checkbox_wipe_sd"
+        android:text="@string/label_wipe_sd"
+        android:layout_above="@+id/space_settings_g1"
+        />
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:layout_above="@+id/label_triggers"
+        android:id="@+id/space_settings_g1"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/label_triggers"
+        android:text="@string/label_trigger"
+        android:textStyle="bold"
+        android:layout_above="@+id/checkbox_multiclick"/>
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/checkbox_multiclick"
+        android:text="@string/label_trigger_multiclick"
+        android:layout_above="@+id/edit_clicks"/>
+    <EditText
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/edit_clicks"
+        android:layout_above="@+id/spacer_settings_bottom"
+        android:inputType="number"
+        android:imeOptions="actionDone"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/spacer_settings_bottom"
+        android:layout_toRightOf="@+id/edit_clicks"
+        android:id="@+id/label_clicks"
+        android:text="@string/label_click_count"/>
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/spacer_settings_bottom"/>
 </RelativeLayout>

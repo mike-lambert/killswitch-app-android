@@ -3,7 +3,6 @@ package com.github.mikelambert.killswitch;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.Log;
@@ -79,10 +78,14 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     }
 
     @Override
-    public void onSettingsUpdated() {
+    public void onSettingsUpdated(PersistentState state) {
+        if (state != null){
+            this.state = state;
+            saveState();
+        }
         Log.v(this.getClass().getSimpleName(), "SETTINGS UPDATED");
         refreshState();
-        onStarted();
+        //onStarted();
     }
 
     @Override
@@ -134,14 +137,6 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
             devicePolicyManager.removeActiveAdmin(adminComponentName);
             onDisabled();
         }
-    }
-
-    @Override
-    public Intent createDeviceAdminRequest(String explanation) {
-        Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
-        intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponentName);
-        intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, explanation);
-        return intent;
     }
 
     @Override
