@@ -1,5 +1,6 @@
 package com.github.mikelambert.killswitch;
 
+import android.content.ComponentName;
 import android.content.Intent;
 
 public interface KillswitchDeviceAdministrator {
@@ -14,4 +15,5 @@ public interface KillswitchDeviceAdministrator {
     boolean isEnabled();
     void disable();
     Intent createDeviceAdminRequest(String explanation);
+    ComponentName getAdminComponentName();
 }

@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 
+import org.greenrobot.eventbus.EventBus;
+
 import static com.github.mikelambert.killswitch.Intents.EVENT_KILLSWITCH_ARMED;
 import static com.github.mikelambert.killswitch.Intents.EVENT_KILLSWITCH_DISARMED;
 import static com.github.mikelambert.killswitch.Intents.EVENT_KILLSWITCH_TRIGGER;
@@ -31,10 +33,12 @@ public class KillswitchApplication extends Application {
 
     private KillswitchDeviceAdministrator killswitchDeviceAdministrator;
     private KillswitchEventsReceiver eventsReceiver;
+    private EventBus eventBus;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        eventBus = EventBus.getDefault();
         killswitchDeviceAdministrator = new KillswitchDeviceAdministratorImpl(this);
         killswitchDeviceAdministrator.onStarted();
         registerEventsReceiver();
@@ -54,6 +58,10 @@ public class KillswitchApplication extends Application {
 
     public static KillswitchApplication getInstance(Context context){
         return (KillswitchApplication)context.getApplicationContext();
+    }
+
+    public static EventBus getEventBus(Context context) {
+        return getInstance(context).eventBus;
     }
 
     private void registerEventsReceiver() {
