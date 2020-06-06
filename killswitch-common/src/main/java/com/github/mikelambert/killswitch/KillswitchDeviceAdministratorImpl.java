@@ -136,11 +136,15 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     }
 
     private void enableKeyguardFeatures() {
-        devicePolicyManager.setKeyguardDisabledFeatures(adminComponentName, KEYGUARD_DISABLE_FEATURES_NONE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            devicePolicyManager.setKeyguardDisabledFeatures(adminComponentName, KEYGUARD_DISABLE_FEATURES_NONE);
+        }
     }
 
     private void disableKeyGuardFeatures() {
-        devicePolicyManager.setKeyguardDisabledFeatures(adminComponentName, KEYGUARD_DISABLE_BIOMETRICS | KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            devicePolicyManager.setKeyguardDisabledFeatures(adminComponentName, KEYGUARD_DISABLE_BIOMETRICS | KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS);
+        }
     }
 
     private boolean isAdminActive() {
@@ -164,12 +168,14 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
 
     private void forceKeyguard() {
         if (isAdminActive()) {
-            if (!getKeyguardManager().isDeviceSecure()) {
-                Intent k = getKeyguardManager().createConfirmDeviceCredentialIntent("Killswitch", "Securing device disarming");
-                if (k == null){
-                    // TODO: toast
-                } else {
-                    // TODO: keyguard
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (!getKeyguardManager().isDeviceSecure()) {
+                    Intent k = getKeyguardManager().createConfirmDeviceCredentialIntent("Killswitch", "Securing device disarming");
+                    if (k == null){
+                        // TODO: toast
+                    } else {
+                        // TODO: keyguard
+                    }
                 }
             }
         }
