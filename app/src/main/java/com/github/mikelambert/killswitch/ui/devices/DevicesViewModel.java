@@ -4,16 +4,17 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.github.mikelambert.killswitch.model.BluetoothToken;
+
 public class DevicesViewModel extends ViewModel {
 
-    private MutableLiveData<String> mText;
+    private MutableLiveData<BluetoothToken> data;
 
     public DevicesViewModel() {
-        mText = new MutableLiveData<>();
-        mText.setValue("This is devices fragment");
+        data = new MutableLiveData<>();
     }
 
-    public LiveData<String> getText() {
-        return mText;
+    public LiveData<BluetoothToken> getData() {
+        return data;
     }
 }
