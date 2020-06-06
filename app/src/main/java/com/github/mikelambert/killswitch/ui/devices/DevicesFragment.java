@@ -20,8 +20,7 @@ public class DevicesFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        devicesViewModel =
-                ViewModelProviders.of(this).get(DevicesViewModel.class);
+        devicesViewModel = ViewModelProviders.of(this).get(DevicesViewModel.class);
         View root = inflater.inflate(R.layout.fragment_devices, container, false);
         final TextView textView = root.findViewById(R.id.text_dashboard);
         devicesViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {

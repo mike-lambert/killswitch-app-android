@@ -2,6 +2,7 @@
     <string name="app_name">Killswitch</string>
     <string name="title_status">Статус</string>
     <string name="title_devices">Устройства</string>
+    <string name="title_settings">Настройки</string>
     <string name="disarm">Отключить</string>
     <string name="arm">Включить</string>
     <string name="enable">Получить</string>
@@ -14,4 +15,9 @@
     <string name="label_killswitch_disarmed">Отключен</string>
     <string name="label_killswitch_engaged">Включен</string>
     <string name="explanation">Killswitch позволяет вам быстро очистить устройство в случае риска компрометации данных</string>
+    <!-- settings -->
+    <string name="label_wipe_sd">Очищать карту памяти</string>
+    <string name="label_trigger">Инициировать вайп</string>
+    <string name="label_trigger_multiclick">Мульти-клик кнопкой питания</string>
+    <string name="label_click_count">Кликов для срабатывания</string>
 </resources>

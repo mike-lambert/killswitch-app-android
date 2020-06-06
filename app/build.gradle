@@ -8,8 +8,8 @@ android {
         applicationId "com.github.mikelambert.killswitch"
         minSdkVersion 14
         targetSdkVersion 29
-        versionCode 5
-        versionName "1.5"
+        versionCode 6
+        versionName "1.6"
         setProperty("archivesBaseName", "com.github.mikelambert.killswitch-$versionName")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -20,6 +20,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -40,6 +41,7 @@ dependencies {
     implementation project(':killswitch-io-ble')
     implementation project(':killswitch-io-usb')
     implementation project(':killswitch-common')
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.12'
     annotationProcessor 'org.projectlombok:lombok:1.18.12'
