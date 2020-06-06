@@ -41,10 +41,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         Log.v("Main", "Resumed. Checking secure status");
+        final KeyguardManager keyguardManager = (KeyguardManager) this.getApplicationContext().getSystemService(Context.KEYGUARD_SERVICE);
         if (KillswitchApplication.getInstance(this).getKillswitch().isArmed() && !authenticated) {
             Log.v("Main", " armed, checking credentials");
-            KeyguardManager keyguardManager = (KeyguardManager) this.getApplicationContext().getSystemService(Context.KEYGUARD_SERVICE);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (keyguardManager.isDeviceLocked()){
+                    Log.v("Main", " device locked;hiding app");
+                    moveTaskToBack(true);
+                    return;
+                }
                 Intent k = keyguardManager.createConfirmDeviceCredentialIntent("Killswitch", "Secure Killswitch disarming");
                 Log.v("Main", "  intent: " + k);
                 if (k != null) {

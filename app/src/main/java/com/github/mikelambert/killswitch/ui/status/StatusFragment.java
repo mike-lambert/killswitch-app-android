@@ -91,6 +91,8 @@ public class StatusFragment extends Fragment {
             if (toggleEngage.isChecked()) {
                 Log.v("StatusFragment", "Sending ARMED intent");
                 getActivity().sendBroadcast(Intents.createKillswitchArmedIntent());
+                Log.v("StatusFragment", "Hiding app");
+                getActivity().moveTaskToBack(true);
             } else {
                 Log.v("StatusFragment", "Sending DISARMED intent");
                 getActivity().sendBroadcast(Intents.createKillswitchDisarmedIntent());
