@@ -14,4 +14,5 @@
     <string name="label_killswitch_disarmed">Disarmed</string>
     <string name="label_killswitch_engaged">Engaged</string>
     <string name="explanation">Killswitch allow you to engage wipe locally in device compromisal risk cases</string>
+    <string name="title_settings">Settings</string>
 </resources>
