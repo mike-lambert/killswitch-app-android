@@ -2,6 +2,7 @@ package com.github.mikelambert.killswitch.ui.status;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -52,10 +53,17 @@ public class StatusFragment extends Fragment {
             lastStatus = status;
             toggleEngage.setEnabled(status.isAdminActive());
             toggleEngage.setChecked(status.isKillswitchArmed());
-            toggleEngage.setTextColor(status.isKillswitchArmed() ? colorResource(R.color.colorAccent) : colorResource(R.color.color_ok));
+            toggleEngage.setTextColor(status.isAdminActive() ?
+                            (status.isKillswitchArmed() ? colorResource(R.color.colorAccent) : Color.WHITE):
+                    colorResource(android.R.color.tab_indicator_text)
+            );
 
+            toggleAdmin.setEnabled(!status.isKillswitchArmed());
             toggleAdmin.setChecked(status.isAdminActive());
-            toggleAdmin.setTextColor(status.isAdminActive() ? colorResource(R.color.colorAccent) : colorResource(R.color.color_ok));
+            toggleAdmin.setTextColor(!status.isKillswitchArmed() ?
+                    (status.isAdminActive() ? colorResource(R.color.colorAccent) : Color.WHITE):
+                    colorResource(android.R.color.tab_indicator_text)
+            );
 
             statusAdmin.setText(status.isAdminActive() ? R.string.label_admin_active : R.string.label_admin_inactive);
             statusAdmin.setTextColor(status.isAdminActive() ? colorResource(R.color.danger) : colorResource(R.color.color_ok));
@@ -66,8 +74,8 @@ public class StatusFragment extends Fragment {
             wipeButton.setEnabled(status.isAdminActive() && status.isKillswitchArmed());
         });
 
-        toggleAdmin.setOnClickListener( view -> {
-            if (toggleAdmin.isChecked()){
+        toggleAdmin.setOnClickListener(view -> {
+            if (toggleAdmin.isChecked()) {
                 Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
                 intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, KillswitchApplication.getInstance(getActivity()).getKillswitch().getAdminComponentName());
                 intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, getString(R.string.explanation));
@@ -109,7 +117,7 @@ public class StatusFragment extends Fragment {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == REQUEST_CODE_INSTALL_ADMIN){
+        if (requestCode == REQUEST_CODE_INSTALL_ADMIN) {
             refreshState();
             return;
         }
@@ -117,11 +125,11 @@ public class StatusFragment extends Fragment {
     }
 
     @Subscribe
-    public void onArmedStateChanged(KillswitchArmedStatus status){
+    public void onArmedStateChanged(KillswitchArmedStatus status) {
         Log.v("StatusFragment", "EventBus: Armed - " + status.isValue());
         final boolean enabled = KillswitchApplication.getInstance(getActivity()).getKillswitch().isEnabled();
         KillswitchStatus data;
-        if (lastStatus != null){
+        if (lastStatus != null) {
             data = lastStatus;
             data.setKillswitchArmed(status.isValue());
         } else {
@@ -135,7 +143,7 @@ public class StatusFragment extends Fragment {
         Log.v("StatusFragment", "EventBus: isAdmin - " + status.isValue());
         final boolean armed = KillswitchApplication.getInstance(getActivity()).getKillswitch().isArmed();
         KillswitchStatus data;
-        if (lastStatus != null){
+        if (lastStatus != null) {
             data = lastStatus;
             data.setAdminActive(status.isValue());
         } else {

@@ -5,7 +5,7 @@ android {
     buildToolsVersion "29.0.2"
 
     defaultConfig {
-        minSdkVersion 23
+        minSdkVersion 14
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -21,6 +21,10 @@ android {
         }
     }
 
+    afterEvaluate {
+        generateReleaseBuildConfig.enabled = false
+        generateDebugBuildConfig.enabled = false
+    }
 }
 
 dependencies {
