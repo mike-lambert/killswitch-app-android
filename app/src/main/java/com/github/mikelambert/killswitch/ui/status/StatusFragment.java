@@ -19,7 +19,11 @@ import com.github.mikelambert.killswitch.Intents;
 import com.github.mikelambert.killswitch.KillswitchApplication;
 import com.github.mikelambert.killswitch.KillswitchDeviceAdministrator;
 import com.github.mikelambert.killswitch.R;
+import com.github.mikelambert.killswitch.event.KillswitchAdminStatus;
+import com.github.mikelambert.killswitch.event.KillswitchArmedStatus;
 import com.github.mikelambert.killswitch.model.KillswitchStatus;
+
+import org.greenrobot.eventbus.Subscribe;
 
 public class StatusFragment extends Fragment {
     public static final int REQUEST_CODE_INSTALL_ADMIN = 0x0000ADAD;
@@ -29,6 +33,7 @@ public class StatusFragment extends Fragment {
     private ToggleButton toggleAdmin;
     private TextView statusAdmin;
     private TextView statusKillswitch;
+    private KillswitchStatus lastStatus;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -39,6 +44,7 @@ public class StatusFragment extends Fragment {
         statusAdmin = root.findViewById(R.id.status_admin);
         statusKillswitch = root.findViewById(R.id.status_killswitch);
         statusViewModel.getProducer().observe(getViewLifecycleOwner(), status -> {
+            lastStatus = status;
             toggleEngage.setEnabled(status.isAdminActive());
             toggleEngage.setChecked(status.isKillswitchArmed());
             toggleAdmin.setChecked(status.isAdminActive());
@@ -55,7 +61,6 @@ public class StatusFragment extends Fragment {
             } else {
                 Log.v("StatusFragment", "Revoking admin permissions");
                 KillswitchApplication.getInstance(getActivity()).getKillswitch().disable();
-                refreshState();
             }
         });
 
@@ -67,7 +72,6 @@ public class StatusFragment extends Fragment {
                 Log.v("StatusFragment", "Sending DISARMED intent");
                 getActivity().sendBroadcast(Intents.createKillswitchDisarmedIntent());
             }
-            refreshState();
         });
         return root;
     }
@@ -75,7 +79,14 @@ public class StatusFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        KillswitchApplication.getEventBus(getActivity()).register(this);
         refreshState();
+    }
+
+    @Override
+    public void onPause() {
+        KillswitchApplication.getEventBus(getActivity()).unregister(this);
+        super.onPause();
     }
 
     @Override
@@ -85,6 +96,34 @@ public class StatusFragment extends Fragment {
             return;
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Subscribe
+    public void onArmedStateChanged(KillswitchArmedStatus status){
+        Log.v("StatusFragment", "EventBus: Armed - " + status.isValue());
+        final boolean enabled = KillswitchApplication.getInstance(getActivity()).getKillswitch().isEnabled();
+        KillswitchStatus data;
+        if (lastStatus != null){
+            data = lastStatus;
+            data.setKillswitchArmed(status.isValue());
+        } else {
+            data = new KillswitchStatus(enabled, status.isValue());
+        }
+        statusViewModel.post(data);
+    }
+
+    @Subscribe
+    public void onDeviceAdministratorStateChanged(KillswitchAdminStatus status) {
+        Log.v("StatusFragment", "EventBus: isAdmin - " + status.isValue());
+        final boolean armed = KillswitchApplication.getInstance(getActivity()).getKillswitch().isArmed();
+        KillswitchStatus data;
+        if (lastStatus != null){
+            data = lastStatus;
+            data.setAdminActive(status.isValue());
+        } else {
+            data = new KillswitchStatus(status.isValue(), armed);
+        }
+        statusViewModel.post(data);
     }
 
     private void refreshState() {
