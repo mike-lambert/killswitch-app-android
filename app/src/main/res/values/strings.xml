@@ -6,6 +6,7 @@
     <string name="arm">Engage</string>
     <string name="enable">Gain admin</string>
     <string name="disable">Revoke admin</string>
+    <string name="wipe">Wipe device</string>
     <string name="label_hint_admin">Administrator status</string>
     <string name="label_hint_killswitch">Killswitch status</string>
     <string name="label_admin_inactive">Inactive</string>

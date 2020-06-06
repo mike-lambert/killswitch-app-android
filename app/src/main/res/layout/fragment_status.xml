@@ -9,11 +9,25 @@
         android:layout_height="60dp"
         android:layout_alignParentBottom="true"
         android:id="@+id/spacer_bottom"/>
+    <Button
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/button_wipe"
+        android:text="@string/wipe"
+        android:textStyle="bold"
+        android:layout_above="@+id/spacer_bottom"
+        android:layout_centerHorizontal="true"
+        android:background="@color/danger"/>
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:layout_above="@+id/button_wipe"
+        android:id="@+id/spacer_wipe"/>
     <ToggleButton
         android:layout_width="120dp"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
-        android:layout_above="@+id/spacer_bottom"
+        android:layout_above="@+id/spacer_wipe"
         android:textOff="@string/arm"
         android:textOn="@string/disarm"
         android:id="@+id/toggle_engage"
