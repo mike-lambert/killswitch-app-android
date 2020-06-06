@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
@@ -25,6 +26,8 @@ import com.github.mikelambert.killswitch.model.KillswitchStatus;
 
 import org.greenrobot.eventbus.Subscribe;
 
+import static com.github.mikelambert.killswitch.Intents.FLAG_KILLSWITCH_TRIGGER_RED_BUTTON;
+
 public class StatusFragment extends Fragment {
     public static final int REQUEST_CODE_INSTALL_ADMIN = 0x0000ADAD;
 
@@ -34,6 +37,7 @@ public class StatusFragment extends Fragment {
     private TextView statusAdmin;
     private TextView statusKillswitch;
     private KillswitchStatus lastStatus;
+    private Button wipeButton;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -43,6 +47,7 @@ public class StatusFragment extends Fragment {
         toggleAdmin = root.findViewById(R.id.toggle_activate);
         statusAdmin = root.findViewById(R.id.status_admin);
         statusKillswitch = root.findViewById(R.id.status_killswitch);
+        wipeButton = root.findViewById(R.id.button_wipe);
         statusViewModel.getProducer().observe(getViewLifecycleOwner(), status -> {
             lastStatus = status;
             toggleEngage.setEnabled(status.isAdminActive());
@@ -50,6 +55,7 @@ public class StatusFragment extends Fragment {
             toggleAdmin.setChecked(status.isAdminActive());
             statusAdmin.setText(status.isAdminActive() ? R.string.label_admin_active : R.string.label_admin_inactive);
             statusKillswitch.setText(status.isKillswitchArmed() ? R.string.label_killswitch_engaged : R.string.label_killswitch_disarmed);
+            wipeButton.setEnabled(status.isAdminActive() && status.isKillswitchArmed());
         });
 
         toggleAdmin.setOnClickListener( view -> {
@@ -72,6 +78,10 @@ public class StatusFragment extends Fragment {
                 Log.v("StatusFragment", "Sending DISARMED intent");
                 getActivity().sendBroadcast(Intents.createKillswitchDisarmedIntent());
             }
+        });
+
+        wipeButton.setOnClickListener(view -> {
+            KillswitchApplication.getInstance(getActivity()).getKillswitch().onTrigger(FLAG_KILLSWITCH_TRIGGER_RED_BUTTON);
         });
         return root;
     }
