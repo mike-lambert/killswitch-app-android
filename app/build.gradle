@@ -10,7 +10,7 @@ android {
         targetSdkVersion 29
         versionCode 2
         versionName "1.1"
-
+        setProperty("archivesBaseName", "com.github.mikelambert.killswitch-$versionName")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
