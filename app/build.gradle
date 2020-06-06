@@ -41,6 +41,7 @@ dependencies {
     implementation project(':killswitch-io-ble')
     implementation project(':killswitch-io-usb')
     implementation project(':killswitch-common')
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.12'
     annotationProcessor 'org.projectlombok:lombok:1.18.12'
