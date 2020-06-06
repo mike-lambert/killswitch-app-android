@@ -54,6 +54,7 @@ public class StatusFragment extends Fragment {
             toggleEngage.setChecked(status.isKillswitchArmed());
             toggleEngage.setTextColor(status.isKillswitchArmed() ? colorResource(R.color.colorAccent) : colorResource(R.color.color_ok));
 
+            toggleAdmin.setEnabled(!status.isKillswitchArmed());
             toggleAdmin.setChecked(status.isAdminActive());
             toggleAdmin.setTextColor(status.isAdminActive() ? colorResource(R.color.colorAccent) : colorResource(R.color.color_ok));
 
