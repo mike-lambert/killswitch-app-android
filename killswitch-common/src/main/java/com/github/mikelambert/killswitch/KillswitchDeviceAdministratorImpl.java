@@ -91,8 +91,8 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     public void onDisabled() {
         if (!isAdminActive()) {
             Log.v(this.getClass().getSimpleName(), "DISABLED");
-            eventBus.post(new KillswitchAdminStatus(false));
         }
+        eventBus.post(new KillswitchAdminStatus(false));
     }
 
     @Override
