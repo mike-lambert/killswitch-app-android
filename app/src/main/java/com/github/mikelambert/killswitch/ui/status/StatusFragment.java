@@ -52,9 +52,17 @@ public class StatusFragment extends Fragment {
             lastStatus = status;
             toggleEngage.setEnabled(status.isAdminActive());
             toggleEngage.setChecked(status.isKillswitchArmed());
+            toggleEngage.setTextColor(status.isKillswitchArmed() ? colorResource(R.color.colorAccent) : colorResource(R.color.color_ok));
+
             toggleAdmin.setChecked(status.isAdminActive());
+            toggleAdmin.setTextColor(status.isAdminActive() ? colorResource(R.color.colorAccent) : colorResource(R.color.color_ok));
+
             statusAdmin.setText(status.isAdminActive() ? R.string.label_admin_active : R.string.label_admin_inactive);
+            statusAdmin.setTextColor(status.isAdminActive() ? colorResource(R.color.danger) : colorResource(R.color.color_ok));
+
             statusKillswitch.setText(status.isKillswitchArmed() ? R.string.label_killswitch_engaged : R.string.label_killswitch_disarmed);
+            statusKillswitch.setTextColor(status.isKillswitchArmed() ? colorResource(R.color.danger) : colorResource(R.color.color_ok));
+
             wipeButton.setEnabled(status.isAdminActive() && status.isKillswitchArmed());
         });
 
@@ -140,5 +148,9 @@ public class StatusFragment extends Fragment {
         final KillswitchDeviceAdministrator entrypoint = KillswitchApplication.getInstance(getActivity()).getKillswitch();
         final KillswitchStatus status = new KillswitchStatus(entrypoint.isEnabled(), entrypoint.isArmed());
         statusViewModel.post(status);
+    }
+
+    private int colorResource(int colorId) {
+        return getResources().getColor(colorId, getActivity().getTheme());
     }
 }

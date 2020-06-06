@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Killswitch</string>
+    <string name="title_status">Статус</string>
+    <string name="title_devices">Устройства</string>
+    <string name="disarm">Отключить</string>
+    <string name="arm">Включить</string>
+    <string name="enable">Получить</string>
+    <string name="disable">Отозвать</string>
+    <string name="wipe">Очистка</string>
+    <string name="label_hint_admin">Права администратора</string>
+    <string name="label_hint_killswitch">Состояние</string>
+    <string name="label_admin_inactive">Неактивен</string>
+    <string name="label_admin_active">Активен</string>
+    <string name="label_killswitch_disarmed">Отключен</string>
+    <string name="label_killswitch_engaged">Включен</string>
+    <string name="explanation">Killswitch позволяет вам быстро очистить устройство в случае риска компрометации данных</string>
+</resources>
