@@ -3,6 +3,7 @@ package com.github.mikelambert.killswitch;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 public class KillswitchRebootReceiver extends BroadcastReceiver {
     @Override
@@ -10,8 +11,8 @@ public class KillswitchRebootReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         if(action != null) {
             if (action.equals(Intent.ACTION_BOOT_COMPLETED) ) {
-                KillswitchApplication.getInstance(context).getKillswitch().onStarted();
-                // TODO: recover state
+                Log.v(this.getClass().getSimpleName(), "Reviving Killswitch ...");
+                KillswitchApplication.getInstance(context).getKillswitch().onSettingsUpdated();
             }
         }
     }
