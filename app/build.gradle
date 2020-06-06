@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.github.mikelambert.killswitch"
-        minSdkVersion 23
+        minSdkVersion 14
         targetSdkVersion 29
         versionCode 3
         versionName "1.2"
