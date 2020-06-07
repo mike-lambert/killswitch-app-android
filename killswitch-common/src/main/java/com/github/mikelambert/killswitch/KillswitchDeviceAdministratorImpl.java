@@ -167,6 +167,9 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     public void bindCircuit(HardwareCircuit circuit) {
         if (this.circuit == null){
             this.circuit = circuit;
+            if (isArmed()){
+                circuit.lockOn(true);
+            }
             startMonitor();
         }
     }
@@ -175,6 +178,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     public void unbindCircuit() {
         if (!isArmed() && circuit != null){
             stopMonitor();
+            circuit.unlock();
             circuit = null;
         }
     }
