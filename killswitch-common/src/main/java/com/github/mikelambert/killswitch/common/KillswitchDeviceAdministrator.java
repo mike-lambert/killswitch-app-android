@@ -1,4 +1,4 @@
-package com.github.mikelambert.killswitch;
+package com.github.mikelambert.killswitch.common;
 
 import android.content.ComponentName;
 

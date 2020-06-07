@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.Log;
 
+import com.github.mikelambert.killswitch.common.KillswitchDeviceAdministrator;
 import com.github.mikelambert.killswitch.event.KillswitchAdminStatus;
 import com.github.mikelambert.killswitch.event.KillswitchArmedStatus;
 import com.github.mikelambert.killswitch.persistence.PersistentState;
@@ -15,7 +16,7 @@ import org.greenrobot.eventbus.EventBus;
 
 import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY;
 import static android.app.admin.DevicePolicyManager.WIPE_EXTERNAL_STORAGE;
-import static com.github.mikelambert.killswitch.Intents.TRIGGER_ACTION_WIPE;
+import static com.github.mikelambert.killswitch.common.Intents.TRIGGER_ACTION_WIPE;
 
 public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdministrator {
     public static final String KILLSWITCH_PREFERENCE_ID = "KILLSWITCH_PREFERENCES";

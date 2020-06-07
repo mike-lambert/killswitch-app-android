@@ -1,10 +1,6 @@
-package com.github.mikelambert.killswitch;
+package com.github.mikelambert.killswitch.common;
 
-import android.content.Context;
 import android.content.Intent;
-import android.os.PowerManager;
-
-import java.util.Objects;
 
 public class Intents {
     public static final String EVENT_KILLSWITCH_TRIGGER = "com.github.mikelambert.killswitch.ACTION_TRIGGER";
