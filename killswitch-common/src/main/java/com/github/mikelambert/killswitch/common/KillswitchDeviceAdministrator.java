@@ -17,4 +17,7 @@ public interface KillswitchDeviceAdministrator {
     void disable();
     ComponentName getAdminComponentName();
     PersistentState currentState();
+    HardwareCircuit getBoundCircuit();
+    void bindCircuit(HardwareCircuit circuit);
+    void unbindCircuit();
 }

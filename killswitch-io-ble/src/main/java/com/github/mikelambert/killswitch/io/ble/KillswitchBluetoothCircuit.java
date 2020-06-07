@@ -150,7 +150,7 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     }
 
     private void onTriggered() {
-        if (state != CircuitState.TRIGGERED) {
+        if (state != CircuitState.TRIGGERED && locked) {
             Log.v("BLE", "TRIGGERED");
             state = CircuitState.TRIGGERED;
             Log.v("BLE", "Sending trigger intent");
@@ -226,12 +226,14 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
 
     @Override
     public void lockOn(boolean fireOnDisconnect) {
+        Log.v("BLE", "Locked on to token");
         locked = true;
         this.fireOnDisconnect = fireOnDisconnect;
     }
 
     @Override
     public void unlock() {
+        Log.v("BLE", "Locked off from token");
         locked = false;
     }
 

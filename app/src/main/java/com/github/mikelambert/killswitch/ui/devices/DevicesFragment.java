@@ -25,7 +25,9 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
+import com.github.mikelambert.killswitch.KillswitchApplication;
 import com.github.mikelambert.killswitch.R;
+import com.github.mikelambert.killswitch.common.KillswitchDeviceAdministrator;
 import com.github.mikelambert.killswitch.io.ble.KillswitchBluetoothCircuit;
 import com.github.mikelambert.killswitch.model.HardwareToken;
 
@@ -52,11 +54,13 @@ public class DevicesFragment extends Fragment {
 
         devicesViewModel.getData().observe(getViewLifecycleOwner(), data -> {
             last = data;
+            KillswitchDeviceAdministrator killswitch = KillswitchApplication.getInstance(getActivity()).getKillswitch();
+            scanButton.setEnabled(!killswitch.isArmed() || killswitch.getBoundCircuit() == null);
             if (last != null){
-                scanButton.setEnabled(false);
                 bleDevice.setText(last.getBluetoothDevice().getName());
+                killswitch.bindCircuit(last.getCircuit());
+                scanButton.setEnabled(false);
             } else {
-                scanButton.setEnabled(true);
                 bleDevice.setText("");
             }
         });
@@ -66,7 +70,9 @@ public class DevicesFragment extends Fragment {
         });
 
         bleDevice.setOnClickListener(view -> {
-            if (last != null && last.getBluetoothDevice() != null){
+            KillswitchDeviceAdministrator killswitch = KillswitchApplication.getInstance(getActivity()).getKillswitch();
+            if (!killswitch.isArmed() && killswitch.getBoundCircuit() != null){
+                killswitch.unbindCircuit();
                 last.getCircuit().disconnect();
                 devicesViewModel.post(null);
             }
