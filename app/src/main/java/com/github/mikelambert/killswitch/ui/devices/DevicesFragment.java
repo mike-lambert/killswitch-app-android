@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.companion.AssociationRequest;
-import android.companion.BluetoothDeviceFilter;
 import android.companion.BluetoothLeDeviceFilter;
 import android.companion.CompanionDeviceManager;
 import android.content.Intent;
@@ -18,6 +17,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -27,6 +27,7 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.github.mikelambert.killswitch.R;
 import com.github.mikelambert.killswitch.io.ble.KillswitchBluetoothCircuit;
+import com.github.mikelambert.killswitch.model.HardwareToken;
 
 import static android.app.Activity.RESULT_OK;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
@@ -38,19 +39,37 @@ public class DevicesFragment extends Fragment {
 
     private DevicesViewModel devicesViewModel;
     private Button scanButton;
+    private TextView bleDevice;
+    private HardwareToken last;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         devicesViewModel = ViewModelProviders.of(this).get(DevicesViewModel.class);
         View root = inflater.inflate(R.layout.fragment_devices, container, false);
         scanButton = root.findViewById(R.id.button_ble_scan);
+        bleDevice = root.findViewById(R.id.text_ble_token);
         scanButton.setEnabled(false);
-        devicesViewModel.getData().observe(getViewLifecycleOwner(), data -> {
 
+        devicesViewModel.getData().observe(getViewLifecycleOwner(), data -> {
+            last = data;
+            if (last != null){
+                scanButton.setEnabled(false);
+                bleDevice.setText(last.getBluetoothDevice().getName());
+            } else {
+                scanButton.setEnabled(true);
+                bleDevice.setText("");
+            }
         });
 
         scanButton.setOnClickListener(view -> {
             discoverCompanions();
+        });
+
+        bleDevice.setOnClickListener(view -> {
+            if (last != null && last.getBluetoothDevice() != null){
+                last.getCircuit().disconnect();
+                devicesViewModel.post(null);
+            }
         });
         return root;
     }
@@ -86,9 +105,6 @@ public class DevicesFragment extends Fragment {
     private void discoverCompanions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CompanionDeviceManager deviceManager = getActivity().getSystemService(CompanionDeviceManager.class);
-            // To skip filtering based on name and supported feature flags (UUIDs),
-            // don't include calls to setNamePattern() and addServiceUuid(),
-            // respectively. This example uses Bluetooth.
             Log.v("Devices", "Building filter");
             BluetoothLeDeviceFilter leFilter = new BluetoothLeDeviceFilter.Builder()
                     .setScanFilter(
@@ -97,21 +113,11 @@ public class DevicesFragment extends Fragment {
                             .build()
                     )
                     .build();
-
-            BluetoothDeviceFilter deviceFilter = new BluetoothDeviceFilter.Builder()
-                    .addServiceUuid(new ParcelUuid(UUID_KILLSWITCH_BLE_SERVICE), new ParcelUuid(UUID_KILLSWITCH_BLE_SERVICE))
-                    .build();
-
-            // The argument provided in setSingleDevice() determines whether a single
-            // device name or a list of device names is presented to the user as
-            // pairing options.
             AssociationRequest pairingRequest = new AssociationRequest.Builder()
                     .addDeviceFilter(leFilter)
                     .setSingleDevice(false)
                     .build();
 
-            // When the app tries to pair with the Bluetooth device, show the
-            // appropriate pairing request dialog to the user.
             Log.v("Devices", "Requesting association");
             deviceManager.associate(pairingRequest,
                     new CompanionDeviceManager.Callback() {
@@ -168,6 +174,8 @@ public class DevicesFragment extends Fragment {
             device.createBond();
             KillswitchBluetoothCircuit circuit = new KillswitchBluetoothCircuit(getActivity(), device);
             circuit.setupConnection();
+            HardwareToken token = new HardwareToken(circuit, device, null);
+            devicesViewModel.post(token);
         }
     }
 

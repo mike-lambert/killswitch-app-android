@@ -17,4 +17,8 @@ public class DevicesViewModel extends ViewModel {
     public LiveData<HardwareToken> getData() {
         return data;
     }
+
+    public void post(HardwareToken token){
+        data.postValue(token);
+    }
 }

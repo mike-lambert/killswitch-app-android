@@ -4,6 +4,7 @@ public interface HardwareCircuit {
     boolean isTarget();
     void lockOn(boolean fireOnDisconnect);
     void unlock();
-    void ping();
+    boolean ping();
     CircuitState state();
+    void disconnect();
 }
