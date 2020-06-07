@@ -4,16 +4,21 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.github.mikelambert.killswitch.model.HardwareToken;
+
 public class DevicesViewModel extends ViewModel {
 
-    private MutableLiveData<String> mText;
+    private MutableLiveData<HardwareToken> data;
 
     public DevicesViewModel() {
-        mText = new MutableLiveData<>();
-        mText.setValue("This is devices fragment");
+        data = new MutableLiveData<>();
     }
 
-    public LiveData<String> getText() {
-        return mText;
+    public LiveData<HardwareToken> getData() {
+        return data;
+    }
+
+    public void post(HardwareToken token){
+        data.postValue(token);
     }
 }

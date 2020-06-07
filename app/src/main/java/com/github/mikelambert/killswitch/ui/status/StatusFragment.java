@@ -17,17 +17,17 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 
-import com.github.mikelambert.killswitch.Intents;
 import com.github.mikelambert.killswitch.KillswitchApplication;
-import com.github.mikelambert.killswitch.KillswitchDeviceAdministrator;
 import com.github.mikelambert.killswitch.R;
+import com.github.mikelambert.killswitch.common.Intents;
+import com.github.mikelambert.killswitch.common.KillswitchDeviceAdministrator;
 import com.github.mikelambert.killswitch.event.KillswitchAdminStatus;
 import com.github.mikelambert.killswitch.event.KillswitchArmedStatus;
 import com.github.mikelambert.killswitch.model.KillswitchStatus;
 
 import org.greenrobot.eventbus.Subscribe;
 
-import static com.github.mikelambert.killswitch.Intents.FLAG_KILLSWITCH_TRIGGER_RED_BUTTON;
+import static com.github.mikelambert.killswitch.common.Intents.FLAG_KILLSWITCH_TRIGGER_RED_BUTTON;
 
 public class StatusFragment extends Fragment {
     public static final int REQUEST_CODE_INSTALL_ADMIN = 0x0000ADAD;

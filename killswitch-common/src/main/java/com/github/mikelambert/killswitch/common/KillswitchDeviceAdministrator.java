@@ -1,4 +1,4 @@
-package com.github.mikelambert.killswitch;
+package com.github.mikelambert.killswitch.common;
 
 import android.content.ComponentName;
 
@@ -17,4 +17,7 @@ public interface KillswitchDeviceAdministrator {
     void disable();
     ComponentName getAdminComponentName();
     PersistentState currentState();
+    HardwareCircuit getBoundCircuit();
+    void bindCircuit(HardwareCircuit circuit);
+    void unbindCircuit();
 }

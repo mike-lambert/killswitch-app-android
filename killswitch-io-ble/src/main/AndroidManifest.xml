@@ -1,2 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.github.mikelambert.killswitch.io.ble" />
+    package="com.github.mikelambert.killswitch.io.ble" >
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_RUN_IN_BACKGROUND"/>
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_USE_DATA_IN_BACKGROUND"/>
+    <uses-feature android:name="android.software.companion_device_setup"/>
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
+</manifest>

@@ -20,4 +20,11 @@
     <string name="label_trigger">Trigger wipe by</string>
     <string name="label_trigger_multiclick">Power button multi-click</string>
     <string name="label_click_count">Clicks to trigger</string>
+    <!-- BLE -->
+    <string name="label_ble_device">BLE device</string>
+    <string name="label_ble_scan">Scan ...</string>
+    <string name="label_ble_unbind">Unbind</string>
+    <!--USB -->
+    <string name="label_usb_lock">Lock on</string>
+    <string name="label_usb_unlock">Unlock</string>
 </resources>

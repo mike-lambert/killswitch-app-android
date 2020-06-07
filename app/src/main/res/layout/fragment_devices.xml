@@ -4,17 +4,63 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.devices.DevicesFragment">
-
-    <TextView
-        android:id="@+id/text_dashboard"
+    <Space
         android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/spacer_devices_bottom"/>
+    <ImageView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:textAlignment="center"
-        android:textSize="20sp"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"/>
+        android:layout_above="@+id/spacer_devices_bottom"
+        android:layout_alignTop="@+id/button_ble_scan"
+        android:id="@+id/icon_ble"
+        android:src="@drawable/bluetooth"
+        android:scaleType="fitCenter"
+        android:tint="@color/color_n"/>
+    <Button
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/spacer_devices_bottom"
+        android:layout_alignParentRight="true"
+        android:text="@string/label_ble_scan"
+        android:id="@+id/button_ble_scan"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/spacer_devices_bottom"
+        android:layout_toRightOf="@+id/icon_ble"
+        android:layout_toLeftOf="@+id/button_ble_scan"
+        android:layout_alignTop="@+id/button_ble_scan"
+        android:id="@+id/text_ble_token"/>
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:id="@+id/spacer_devices_middle"
+        android:layout_above="@+id/button_ble_scan"/>
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/icon_usb"
+        android:src="@drawable/usb"
+        android:scaleType="fitCenter"
+        android:layout_above="@+id/spacer_devices_middle"
+        android:layout_alignTop="@+id/button_usb_lock"
+        android:tint="@color/color_n"/>
+    <ToggleButton
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/spacer_devices_middle"
+        android:layout_alignParentRight="true"
+        android:id="@+id/button_usb_lock"
+        android:textOn="@string/label_usb_unlock"
+        android:textOff="@string/label_usb_lock"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/spacer_devices_middle"
+        android:layout_toRightOf="@+id/icon_usb"
+        android:layout_toLeftOf="@+id/button_usb_lock"
+        android:layout_alignTop="@+id/button_usb_lock"
+        android:id="@+id/text_usb_token"/>
 </RelativeLayout>

@@ -7,11 +7,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 
+import com.github.mikelambert.killswitch.common.KillswitchDeviceAdministrator;
+
 import org.greenrobot.eventbus.EventBus;
 
-import static com.github.mikelambert.killswitch.Intents.EVENT_KILLSWITCH_ARMED;
-import static com.github.mikelambert.killswitch.Intents.EVENT_KILLSWITCH_DISARMED;
-import static com.github.mikelambert.killswitch.Intents.EVENT_KILLSWITCH_TRIGGER;
+import static com.github.mikelambert.killswitch.common.Intents.EVENT_KILLSWITCH_ARMED;
+import static com.github.mikelambert.killswitch.common.Intents.EVENT_KILLSWITCH_DISARMED;
+import static com.github.mikelambert.killswitch.common.Intents.EVENT_KILLSWITCH_TRIGGER;
 
 public class KillswitchApplication extends Application {
     private static class KillswitchEventsReceiver extends BroadcastReceiver {

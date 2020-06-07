@@ -5,4 +5,5 @@
     <color name="colorAccent">#FF9800</color>
     <color name="danger">#F44336</color>
     <color name="color_ok">#22EE22</color>
+    <color name="color_n">#DDDDDD</color>
 </resources>

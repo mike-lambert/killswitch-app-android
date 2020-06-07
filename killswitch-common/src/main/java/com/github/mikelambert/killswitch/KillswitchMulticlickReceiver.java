@@ -5,11 +5,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import com.github.mikelambert.killswitch.common.Intents;
 import com.github.mikelambert.killswitch.persistence.PersistentState;
 
 import java.util.Objects;
 
-import static com.github.mikelambert.killswitch.Intents.FLAG_KILLSWITCH_TRIGGER_RED_BUTTON;
+import static com.github.mikelambert.killswitch.common.Intents.FLAG_KILLSWITCH_TRIGGER_RED_BUTTON;
 
 public class KillswitchMulticlickReceiver extends BroadcastReceiver {
     private int count;
