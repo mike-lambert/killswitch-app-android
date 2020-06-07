@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.Log;
 
+import com.github.mikelambert.killswitch.common.HardwareCircuit;
+import com.github.mikelambert.killswitch.common.KillswitchDeviceAdministrator;
 import com.github.mikelambert.killswitch.event.KillswitchAdminStatus;
 import com.github.mikelambert.killswitch.event.KillswitchArmedStatus;
 import com.github.mikelambert.killswitch.persistence.PersistentState;
@@ -15,7 +17,7 @@ import org.greenrobot.eventbus.EventBus;
 
 import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY;
 import static android.app.admin.DevicePolicyManager.WIPE_EXTERNAL_STORAGE;
-import static com.github.mikelambert.killswitch.Intents.TRIGGER_ACTION_WIPE;
+import static com.github.mikelambert.killswitch.common.Intents.TRIGGER_ACTION_WIPE;
 
 public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdministrator {
     public static final String KILLSWITCH_PREFERENCE_ID = "KILLSWITCH_PREFERENCES";
@@ -31,6 +33,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     private EventBus eventBus;
     private PersistentState state;
     private SharedPreferences preferences;
+    private HardwareCircuit circuit;
 
     public KillswitchDeviceAdministratorImpl(Context context) {
         this.context = context;
@@ -62,6 +65,9 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
             saveState();
             Log.v(this.getClass().getSimpleName(), "ARMED: securing keyguard");
             Log.v(this.getClass().getSimpleName(), "ARMED: locking screen");
+            if (circuit != null){
+                circuit.lockOn(true); // TODO: settings
+            }
             eventBus.post(new KillswitchArmedStatus(true));
             devicePolicyManager.lockNow();
         }
@@ -72,6 +78,9 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
         if (isArmed()) {
             state.setArmed(false);
             saveState();
+            if (circuit != null){
+                circuit.unlock();
+            }
             Log.v(this.getClass().getSimpleName(), "DISARMED: relaxing keyguard");
             eventBus.post(new KillswitchArmedStatus(false));
         }
@@ -147,6 +156,37 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     @Override
     public PersistentState currentState() {
         return PersistentState.cloneState(state);
+    }
+
+    @Override
+    public HardwareCircuit getBoundCircuit() {
+        return circuit;
+    }
+
+    @Override
+    public void bindCircuit(HardwareCircuit circuit) {
+        if (this.circuit == null){
+            this.circuit = circuit;
+            if (isArmed()){
+                circuit.lockOn(true);
+            }
+            startMonitor();
+        }
+    }
+
+    @Override
+    public void unbindCircuit() {
+        if (!isArmed() && circuit != null){
+            stopMonitor();
+            circuit.unlock();
+            circuit = null;
+        }
+    }
+
+    private void stopMonitor() {
+    }
+
+    private void startMonitor() {
     }
 
     private boolean isAdminActive() {
