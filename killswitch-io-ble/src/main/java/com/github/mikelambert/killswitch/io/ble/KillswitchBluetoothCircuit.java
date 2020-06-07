@@ -175,11 +175,13 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     private void onDisconnect() {
         Log.v("BLE", "DISCONNECTED");
         disconnectTime = System.currentTimeMillis();
-        if (fireOnDisconnect){
-            state = CircuitState.OFFLINE;
-        } else {
+        if (fireOnDisconnect && locked){
+            Log.v("BLE", "Blackout. Reconnecting");
             state = CircuitState.COUNTDOWN;
             reconnect();
+        } else {
+            Log.v("BLE", "Graceful offline");
+            state = CircuitState.OFFLINE;
         }
     }
 
