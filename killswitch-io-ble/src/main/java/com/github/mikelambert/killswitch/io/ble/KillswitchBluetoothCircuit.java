@@ -1,10 +1,11 @@
 package com.github.mikelambert.killswitch.io.ble;
 
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
-import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.os.Build;
 import android.util.Log;
@@ -14,6 +15,8 @@ import com.github.mikelambert.killswitch.common.HardwareCircuit;
 
 import java.math.BigInteger;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static android.bluetooth.BluetoothProfile.STATE_CONNECTED;
 import static android.bluetooth.BluetoothProfile.STATE_DISCONNECTED;
@@ -21,9 +24,11 @@ import static android.bluetooth.BluetoothProfile.STATE_DISCONNECTED;
 public class KillswitchBluetoothCircuit implements HardwareCircuit {
     public static final UUID UUID_KILLSWITCH_BLE_SERVICE = UUID.fromString("0000F001-0000-1000-8000-00805F9B34FB");
     public static final UUID UUID_KILLSWITCH_BLE_CHARACTERISTIC = UUID.fromString("0000F002-0000-1000-8000-00805F9B34FB");
+    public static final UUID UUID_KILLSWITCH_BLE_DESC = UUID.fromString("00002902-0000-1000-8000-00805F9B34FB");
 
-    private final ScanResult descriptor;
+    private final BluetoothDevice device;
     private final Context context;
+    private final ExecutorService pool;
     private BluetoothGatt gatt;
     private BluetoothGattService service;
     private BluetoothGattCharacteristic source;
@@ -32,15 +37,15 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     private CircuitState state;
     private BigInteger lastId;
 
-    public KillswitchBluetoothCircuit(Context context, ScanResult descriptor) {
+    public KillswitchBluetoothCircuit(Context context, BluetoothDevice device) {
         this.context = context;
-        this.descriptor = descriptor;
-        setupConnection();
+        this.device = device;
+        this.pool = Executors.newFixedThreadPool(6);
     }
 
     public void setupConnection() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            gatt = descriptor.getDevice().connectGatt(context, false,
+            gatt = device.connectGatt(context, false,
                     new BluetoothGattCallback() {
                         @Override
                         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
@@ -63,7 +68,36 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
                         @Override
                         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                             service = gatt.getService(UUID_KILLSWITCH_BLE_SERVICE);
-                            Log.v("BLE", "SERVICES DISCOVERED; target: " + service);
+                            Log.v("BLE", "SERVICES DISCOVERED; target: " + service.getUuid());
+                            for (BluetoothGattCharacteristic c : service.getCharacteristics()) {
+                                Log.v("BLE", c.getUuid() + ": " + c.getPermissions());
+                            }
+                            BluetoothGattCharacteristic characteristic = service.getCharacteristic(UUID_KILLSWITCH_BLE_CHARACTERISTIC);
+                            gatt.setCharacteristicNotification(characteristic, true);
+                            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID_KILLSWITCH_BLE_DESC);
+                            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                            gatt.writeDescriptor(descriptor);
+                            Log.v("BLE", "Subscribed to notifications for " + UUID_KILLSWITCH_BLE_CHARACTERISTIC);
+                            /*pool.submit(() -> {
+                                final Object lock = new Object();
+                                while (KillswitchBluetoothCircuit.this.gatt != null && service != null){
+                                    try {
+                                        byte[] packet = service.getCharacteristic(UUID_KILLSWITCH_BLE_CHARACTERISTIC).getValue();
+                                        Log.v("BLE", "payload: " + packet);
+                                        if (packet != null) {
+                                            onPayload(packet);
+                                        }
+                                    } finally {
+                                        synchronized (lock){
+                                            try {
+                                                lock.wait(500);
+                                            } catch (InterruptedException e) {
+                                                e.printStackTrace();
+                                            }
+                                        }
+                                    }
+                                }
+                            });*/
                         }
 
                         @Override
@@ -95,29 +129,26 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
         if (payload.length < 2){
             return;
         }
-        byte appLayer = payload[0];
-        byte dataLen = payload[1];
-        if (appLayer != 0x00){
-            Log.v("BLE", "Unknown trigger protocol: " + appLayer);
-            return;
+        handleProtocolVer0(payload);
+    }
+
+    private boolean handleProtocolVer0(byte[] payload) {
+        // protocol v.0
+        if (payload.length == 8){
+            BigInteger value = new BigInteger(1, payload);
+            lastId = value;
+            Log.v("BLE", " <- " + value.toString());
+            return true;
         }
-        if (dataLen < 8){
-            Log.v("BLE", "Unknown payload size: " + dataLen);
-            return;
-        }
-        if (payload.length < dataLen + 2){
-            Log.v("BLE", "Protocol mismatch. Declared packet size " + dataLen + ", overall buffer " + payload.length);
-            return;
-        }
-        byte[] packet = new byte[dataLen];
-        System.arraycopy(payload, 2, packet, 0, dataLen);
-        BigInteger value = new BigInteger(1, packet);
-        lastId = value;
-        Log.v("BLE", " <- " + value.toString());
+        Log.v("BLE", "Unknown payload size for v.0: " + payload.length);
+        return false;
     }
 
     private void onConnect() {
         Log.v("BLE", "");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            gatt.discoverServices();
+        }
     }
 
     private void onDisconnect() {
