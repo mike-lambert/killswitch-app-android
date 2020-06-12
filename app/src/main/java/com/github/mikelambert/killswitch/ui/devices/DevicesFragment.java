@@ -193,30 +193,28 @@ public class DevicesFragment extends Fragment {
     }
 
     private void handleCompanionPairing(Object deviceToPair) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            BluetoothDevice device = null;
-            if (deviceToPair instanceof BluetoothDevice) {
-                Log.v("Devices", "4.4 : " + deviceToPair);
-                device = (BluetoothDevice) deviceToPair;
-            }
-
-            if (deviceToPair instanceof ScanResult) {
-                Log.v("Devices", "5.0+ : " + deviceToPair);
-                ScanResult result = (ScanResult) deviceToPair;
-                device = result.getDevice();
-            }
-
-            if (device == null) {
-                Log.v("Devices", "No BLE device acquired");
-                return;
-            }
-            Log.v("Devices", "Bonding with " + device.getName() + "; MAC " + device.getAddress());
-            device.createBond();
-            KillswitchBluetoothCircuit circuit = new KillswitchBluetoothCircuit(getActivity(), device);
-            circuit.setupConnection();
-            HardwareToken token = new HardwareToken(circuit, device, null);
-            devicesViewModel.post(token);
+        BluetoothDevice device = null;
+        if (deviceToPair instanceof BluetoothDevice) {
+            Log.v("Devices", "4.4 : " + deviceToPair);
+            device = (BluetoothDevice) deviceToPair;
         }
+
+        if (deviceToPair instanceof ScanResult) {
+            Log.v("Devices", "5.0+ : " + deviceToPair);
+            ScanResult result = (ScanResult) deviceToPair;
+            device = result.getDevice();
+        }
+
+        if (device == null) {
+            Log.v("Devices", "No BLE device acquired");
+            return;
+        }
+        Log.v("Devices", "Bonding with " + device.getName() + "; MAC " + device.getAddress());
+        device.createBond();
+        KillswitchBluetoothCircuit circuit = new KillswitchBluetoothCircuit(getActivity(), device);
+        circuit.setupConnection();
+        HardwareToken token = new HardwareToken(circuit, device, null);
+        devicesViewModel.post(token);
     }
 
     @Override
