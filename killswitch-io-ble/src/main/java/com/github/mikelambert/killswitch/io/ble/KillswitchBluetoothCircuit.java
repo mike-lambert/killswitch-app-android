@@ -34,7 +34,7 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
 
     public static final byte[] KILLSWITCH_LED_ON = new byte[]{0x00, 0x00};
     public static final byte[] KILLSWITCH_LED_OFF = new byte[]{0x00, 0x01};
-    public static final byte[] KILLSWITCH_LED_BLINK = new byte[]{0x34, 0x01};
+    public static final byte[] KILLSWITCH_LED_BLINK = new byte[]{0x23, 0x01};
 
     private final BluetoothDevice device;
     private final Context context;
@@ -96,6 +96,7 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
                             Log.v("BLE", "SERVICES DISCOVERED; LED sink           : " + serviceLed.getUuid());
                             subscribeToKillswitchService();
                             state = CircuitState.ENGAGED;
+                            ledOff();
                             ledBlink();
                         }
 
@@ -127,24 +128,42 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     private void ledBlink() {
         Log.v("BLE", "LED set blinking");
         BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
+        //cled.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
         cled.setValue(KILLSWITCH_LED_BLINK);
         gatt.writeCharacteristic(cled);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private void ledOn() {
         Log.v("BLE", "LED ON");
         BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
+        //cled.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
         cled.setValue(KILLSWITCH_LED_ON);
         gatt.writeCharacteristic(cled);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private void ledOff() {
         Log.v("BLE", "LED OFF");
         BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
+        cled.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
         cled.setValue(KILLSWITCH_LED_OFF);
         gatt.writeCharacteristic(cled);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     private String hex(byte[] value) {

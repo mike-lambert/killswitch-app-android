@@ -13,7 +13,10 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.NavigationUI;
 
+import com.github.mikelambert.killswitch.event.ScreenLockedEvent;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import org.greenrobot.eventbus.Subscribe;
 
 import static com.github.mikelambert.killswitch.ui.status.StatusFragment.REQUEST_CODE_KEYGUARD;
 
@@ -34,22 +37,27 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
+        KillswitchApplication.getEventBus(this).unregister(this);
+        authenticated = false;
+        final KeyguardManager keyguardManager = (KeyguardManager) this.getApplicationContext().getSystemService(Context.KEYGUARD_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (keyguardManager.isDeviceLocked()){
+                Log.v("Main", " device locked;hiding app");
+                moveTaskToBack(true);
+            }
+        }
         super.onPause();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        KillswitchApplication.getEventBus(this).register(this);
         Log.v("Main", "Resumed. Checking secure status");
         final KeyguardManager keyguardManager = (KeyguardManager) this.getApplicationContext().getSystemService(Context.KEYGUARD_SERVICE);
         if (KillswitchApplication.getInstance(this).getKillswitch().isArmed() && !authenticated) {
             Log.v("Main", " armed, checking credentials");
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (keyguardManager.isDeviceLocked()){
-                    Log.v("Main", " device locked;hiding app");
-                    moveTaskToBack(true);
-                    return;
-                }
                 Intent k = keyguardManager.createConfirmDeviceCredentialIntent("Killswitch", "Secure Killswitch disarming");
                 Log.v("Main", "  intent: " + k);
                 if (k != null) {
@@ -60,7 +68,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Log.v("Main", " authenticated or not armed ...");
         }
-        authenticated = false;
     }
 
     @Override
@@ -76,5 +83,11 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Subscribe
+    public void onScreenLocked(ScreenLockedEvent event) {
+        Log.v("Main", "Screen locked. Reset authentication status");
+        authenticated = false;
     }
 }

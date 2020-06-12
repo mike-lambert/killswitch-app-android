@@ -6,10 +6,12 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.github.mikelambert.killswitch.common.Intents;
+import com.github.mikelambert.killswitch.event.ScreenLockedEvent;
 import com.github.mikelambert.killswitch.persistence.PersistentState;
 
 import java.util.Objects;
 
+import static android.content.Intent.ACTION_SCREEN_OFF;
 import static com.github.mikelambert.killswitch.common.Intents.FLAG_KILLSWITCH_TRIGGER_RED_BUTTON;
 
 public class KillswitchMulticlickReceiver extends BroadcastReceiver {
@@ -39,6 +41,10 @@ public class KillswitchMulticlickReceiver extends BroadcastReceiver {
                 Log.v(this.getClass().getSimpleName(), "Sending trigger broadcast");
                 context.sendBroadcast(Intents.createKillswitchTriggerIntent(FLAG_KILLSWITCH_TRIGGER_RED_BUTTON));
             }
+        }
+        if (ACTION_SCREEN_OFF.equals(intent.getAction())){
+            Log.v(this.getClass().getSimpleName(), "Notifying screen lock");
+            KillswitchApplication.getEventBus(context).post(new ScreenLockedEvent());
         }
     }
 }

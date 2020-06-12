@@ -61,7 +61,7 @@ public class DevicesFragment extends Fragment {
             KillswitchDeviceAdministrator killswitch = KillswitchApplication.getInstance(getActivity()).getKillswitch();
             scanButton.setEnabled(!killswitch.isArmed() || killswitch.getBoundCircuit() == null);
             if (last != null) {
-                bleDevice.setText(last.getBluetoothDevice().getName());
+                bleDevice.setText(last.getCircuit().getName());
                 killswitch.bindCircuit(last.getCircuit());
                 scanButton.setEnabled(false);
             } else {
