@@ -33,7 +33,7 @@ import com.github.mikelambert.killswitch.model.HardwareToken;
 
 import static android.app.Activity.RESULT_OK;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-import static com.github.mikelambert.killswitch.io.ble.KillswitchBluetoothCircuit.UUID_KILLSWITCH_BLE_SERVICE;
+import static com.github.mikelambert.killswitch.io.ble.KillswitchBluetoothCircuit.UUID_KILLSWITCH_BLE_SERVICE_PING;
 
 public class DevicesFragment extends Fragment {
     public static int REQUEST_PAIR_DEVICE = 0x0000BBBB;
@@ -115,7 +115,7 @@ public class DevicesFragment extends Fragment {
             BluetoothLeDeviceFilter leFilter = new BluetoothLeDeviceFilter.Builder()
                     .setScanFilter(
                             new ScanFilter.Builder()
-                                    .setServiceData(new ParcelUuid(UUID_KILLSWITCH_BLE_SERVICE), null)
+                                    .setServiceData(new ParcelUuid(UUID_KILLSWITCH_BLE_SERVICE_PING), null)
                             .build()
                     )
                     .build();
