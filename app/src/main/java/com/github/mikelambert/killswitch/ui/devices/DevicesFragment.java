@@ -63,7 +63,7 @@ public class DevicesFragment extends Fragment {
             if (last != null) {
                 bleDevice.setText(last.getCircuit().getName());
                 killswitch.bindCircuit(last.getCircuit());
-                scanButton.setEnabled(false);
+                scanButton.setText(R.string.label_ble_unbind);
             } else {
                 bleDevice.setText("");
             }
@@ -78,7 +78,9 @@ public class DevicesFragment extends Fragment {
                     killswitch.unbindCircuit();
                     devicesViewModel.post(null);
                 }
+                scanButton.setText(R.string.label_ble_scan);
             } else {
+                scanButton.setText(R.string.label_ble_unbind);
                 discoverCompanions();
             }
         });
@@ -234,6 +236,7 @@ public class DevicesFragment extends Fragment {
         killswitch.unbindCircuit();
         getActivity().runOnUiThread(() -> {
             scanButton.setEnabled(!killswitch.isArmed() || killswitch.getBoundCircuit() == null);
+            scanButton.setText(R.string.label_ble_scan);
             bleDevice.setText("");
         });
     }
