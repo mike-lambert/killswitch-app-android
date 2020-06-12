@@ -53,7 +53,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 devicePolicyManager.wipeData((state.isWipeSdCard() ? WIPE_EXTERNAL_STORAGE : 0), "Killswitch engaged");
             } else {
-                devicePolicyManager.wipeData(0);
+                devicePolicyManager.wipeData((state.isWipeSdCard() ? WIPE_EXTERNAL_STORAGE : 0));
             }
         }
     }
