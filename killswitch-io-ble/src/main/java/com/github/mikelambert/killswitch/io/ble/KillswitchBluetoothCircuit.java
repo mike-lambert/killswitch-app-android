@@ -12,11 +12,12 @@ import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
+import com.github.mikelambert.killswitch.KillswitchApplication;
 import com.github.mikelambert.killswitch.common.CircuitState;
 import com.github.mikelambert.killswitch.common.HardwareCircuit;
 import com.github.mikelambert.killswitch.common.Intents;
+import com.github.mikelambert.killswitch.event.KillswitchBluetoothGracefulDisconnect;
 
-import java.math.BigInteger;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -30,7 +31,7 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     public static final UUID UUID_KILLSWITCH_BLE_SERVICE_LED = UUID.fromString("0000F021-0000-1000-8000-00805F9B34FB");
     public static final UUID UUID_KILLSWITCH_BLE_LED = UUID.fromString("0000F022-0000-1000-8000-00805F9B34FB");
     public static final UUID UUID_KILLSWITCH_BLE_PING_DESCRIPTOR = UUID.fromString("00002902-0000-1000-8000-00805F9B34FB");
-    public static final BigInteger KILLSWITCH_BUTTON_TRIGGERED = new BigInteger("18446744073150521005");
+
     public static final byte[] KILLSWITCH_LED_ON = new byte[]{0x00, 0x00};
     public static final byte[] KILLSWITCH_LED_OFF = new byte[]{0x00, 0x01};
     public static final byte[] KILLSWITCH_LED_BLINK = new byte[]{0x34, 0x01};
@@ -45,7 +46,7 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     private boolean locked;
     private boolean fireOnDisconnect;
     private CircuitState state;
-    private BigInteger lastId;
+    private byte[] packet;
     private long disconnectTime;
     private long lastReconnectTime;
 
@@ -95,7 +96,6 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
                             Log.v("BLE", "SERVICES DISCOVERED; LED sink           : " + serviceLed.getUuid());
                             subscribeToKillswitchService();
                             state = CircuitState.ENGAGED;
-                            ledOff();
                             ledBlink();
                         }
 
@@ -128,6 +128,7 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
         Log.v("BLE", "LED set blinking");
         BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
         cled.setValue(KILLSWITCH_LED_BLINK);
+        gatt.writeCharacteristic(cled);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -135,6 +136,7 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
         Log.v("BLE", "LED ON");
         BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
         cled.setValue(KILLSWITCH_LED_ON);
+        gatt.writeCharacteristic(cled);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -142,6 +144,7 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
         Log.v("BLE", "LED OFF");
         BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
         cled.setValue(KILLSWITCH_LED_OFF);
+        gatt.writeCharacteristic(cled);
     }
 
     private String hex(byte[] value) {
@@ -165,9 +168,8 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     private boolean handleProtocolVer0(byte[] payload) {
         // protocol v.0
         if (payload.length == 8){
-            BigInteger value = new BigInteger(1, payload);
-            lastId = value;
-            Log.v("BLE", " <- " + value.toString());
+            packet = payload;
+            Log.v("BLE", " <- " + hex(packet));
             dispatchEvent();
             return true;
         }
@@ -176,7 +178,7 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     }
 
     private void dispatchEvent() {
-        if (lastId.equals(KILLSWITCH_BUTTON_TRIGGERED)) {
+        if (packet[0] == 0x00 && packet[1] == 0x00 && packet[2] == 0x00 && packet[3] == 0x00) {
             Log.v("BLE", "Trigger value received");
             onTriggered();
         }
@@ -184,13 +186,13 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     }
 
     private void onTriggered() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            ledOn();
+        }
         if (state != CircuitState.TRIGGERED && locked) {
             Log.v("BLE", "TRIGGERED");
             state = CircuitState.TRIGGERED;
             Log.v("BLE", "Sending trigger intent");
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                ledOn();
-            }
             context.sendBroadcast(Intents.createKillswitchTriggerIntent(Intents.FLAG_KILLSWITCH_TRIGGER_RED_BUTTON));
         }
     }
@@ -220,6 +222,7 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
         } else {
             Log.v("BLE", "Graceful offline");
             state = CircuitState.OFFLINE;
+            KillswitchApplication.getEventBus(context).post(new KillswitchBluetoothGracefulDisconnect());
         }
     }
 
@@ -315,5 +318,10 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
                 gatt.disconnect();
             }
         }
+    }
+
+    @Override
+    public String getName() {
+        return device != null ? device.getName() : "";
     }
 }
