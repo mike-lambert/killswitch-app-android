@@ -27,13 +27,17 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.github.mikelambert.killswitch.KillswitchApplication;
 import com.github.mikelambert.killswitch.R;
+import com.github.mikelambert.killswitch.common.HardwareCircuit;
 import com.github.mikelambert.killswitch.common.KillswitchDeviceAdministrator;
+import com.github.mikelambert.killswitch.event.KillswitchBluetoothGracefulDisconnect;
 import com.github.mikelambert.killswitch.io.ble.KillswitchBluetoothCircuit;
 import com.github.mikelambert.killswitch.model.HardwareToken;
 
+import org.greenrobot.eventbus.Subscribe;
+
 import static android.app.Activity.RESULT_OK;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-import static com.github.mikelambert.killswitch.io.ble.KillswitchBluetoothCircuit.UUID_KILLSWITCH_BLE_SERVICE;
+import static com.github.mikelambert.killswitch.io.ble.KillswitchBluetoothCircuit.UUID_KILLSWITCH_BLE_SERVICE_PING;
 
 public class DevicesFragment extends Fragment {
     public static int REQUEST_PAIR_DEVICE = 0x0000BBBB;
@@ -56,24 +60,38 @@ public class DevicesFragment extends Fragment {
             last = data;
             KillswitchDeviceAdministrator killswitch = KillswitchApplication.getInstance(getActivity()).getKillswitch();
             scanButton.setEnabled(!killswitch.isArmed() || killswitch.getBoundCircuit() == null);
-            if (last != null){
-                bleDevice.setText(last.getBluetoothDevice().getName());
+            if (last != null) {
+                bleDevice.setText(last.getCircuit().getName());
                 killswitch.bindCircuit(last.getCircuit());
-                scanButton.setEnabled(false);
+                scanButton.setText(R.string.label_ble_unbind);
             } else {
                 bleDevice.setText("");
             }
         });
 
         scanButton.setOnClickListener(view -> {
-            discoverCompanions();
+            KillswitchDeviceAdministrator killswitch = KillswitchApplication.getInstance(getActivity()).getKillswitch();
+            HardwareCircuit circuit = killswitch.getBoundCircuit();
+            if (circuit != null) {
+                if (!killswitch.isArmed() && killswitch.getBoundCircuit() != null) {
+                    killswitch.getBoundCircuit().disconnect();
+                    killswitch.unbindCircuit();
+                    devicesViewModel.post(null);
+                }
+                scanButton.setText(R.string.label_ble_scan);
+            } else {
+                scanButton.setText(R.string.label_ble_unbind);
+                discoverCompanions();
+            }
         });
 
         bleDevice.setOnClickListener(view -> {
             KillswitchDeviceAdministrator killswitch = KillswitchApplication.getInstance(getActivity()).getKillswitch();
-            if (!killswitch.isArmed() && killswitch.getBoundCircuit() != null){
-                killswitch.unbindCircuit();
-                last.getCircuit().disconnect();
+            if (!killswitch.isArmed() && killswitch.getBoundCircuit() != null) {
+                if (killswitch.getBoundCircuit() != null) {
+                    killswitch.getBoundCircuit().disconnect();
+                    killswitch.unbindCircuit();
+                }
                 devicesViewModel.post(null);
             }
         });
@@ -83,10 +101,26 @@ public class DevicesFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        KillswitchApplication.getEventBus(getActivity()).register(this);
         checkPermissions();
+        KillswitchDeviceAdministrator killswitch = KillswitchApplication.getInstance(getActivity()).getKillswitch();
+        scanButton.setEnabled(!killswitch.isArmed() || killswitch.getBoundCircuit() == null);
+        HardwareCircuit circuit = killswitch.getBoundCircuit();
+        if (circuit != null) {
+            bleDevice.setText(circuit.getName());
+            scanButton.setText(R.string.label_ble_unbind);
+        } else {
+            scanButton.setText(R.string.label_ble_scan);
+        }
     }
 
-    private void checkPermissions(){
+    @Override
+    public void onPause() {
+        KillswitchApplication.getEventBus(getActivity()).unregister(this);
+        super.onPause();
+    }
+
+    private void checkPermissions() {
         boolean btGranted = isGranted(Manifest.permission.BLUETOOTH);
         boolean btAdminGranted = isGranted(Manifest.permission.BLUETOOTH_ADMIN);
         boolean fineLocation = isGranted(Manifest.permission.ACCESS_FINE_LOCATION);
@@ -104,7 +138,7 @@ public class DevicesFragment extends Fragment {
         }
     }
 
-    private boolean isGranted(String permission){
+    private boolean isGranted(String permission) {
         return ContextCompat.checkSelfPermission(getActivity(), permission) == PERMISSION_GRANTED;
     }
 
@@ -115,8 +149,8 @@ public class DevicesFragment extends Fragment {
             BluetoothLeDeviceFilter leFilter = new BluetoothLeDeviceFilter.Builder()
                     .setScanFilter(
                             new ScanFilter.Builder()
-                                    .setServiceData(new ParcelUuid(UUID_KILLSWITCH_BLE_SERVICE), null)
-                            .build()
+                                    .setServiceData(new ParcelUuid(UUID_KILLSWITCH_BLE_SERVICE_PING), null)
+                                    .build()
                     )
                     .build();
             AssociationRequest pairingRequest = new AssociationRequest.Builder()
@@ -159,40 +193,49 @@ public class DevicesFragment extends Fragment {
     }
 
     private void handleCompanionPairing(Object deviceToPair) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            BluetoothDevice device = null;
-            if (deviceToPair instanceof BluetoothDevice){
-                Log.v("Devices", "4.4 : " + deviceToPair);
-                device = (BluetoothDevice)deviceToPair;
-            }
-
-            if (deviceToPair instanceof ScanResult){
-                Log.v("Devices", "5.0+ : " + deviceToPair);
-                ScanResult result = (ScanResult)deviceToPair;
-                device = result.getDevice();
-            }
-
-            if (device == null){
-                Log.v("Devices", "No BLE device acquired");
-                return;
-            }
-            Log.v("Devices", "Bonding with " + device.getName() + "; MAC " + device.getAddress());
-            device.createBond();
-            KillswitchBluetoothCircuit circuit = new KillswitchBluetoothCircuit(getActivity(), device);
-            circuit.setupConnection();
-            HardwareToken token = new HardwareToken(circuit, device, null);
-            devicesViewModel.post(token);
+        BluetoothDevice device = null;
+        if (deviceToPair instanceof BluetoothDevice) {
+            Log.v("Devices", "4.4 : " + deviceToPair);
+            device = (BluetoothDevice) deviceToPair;
         }
+
+        if (deviceToPair instanceof ScanResult) {
+            Log.v("Devices", "5.0+ : " + deviceToPair);
+            ScanResult result = (ScanResult) deviceToPair;
+            device = result.getDevice();
+        }
+
+        if (device == null) {
+            Log.v("Devices", "No BLE device acquired");
+            return;
+        }
+        Log.v("Devices", "Bonding with " + device.getName() + "; MAC " + device.getAddress());
+        device.createBond();
+        KillswitchBluetoothCircuit circuit = new KillswitchBluetoothCircuit(getActivity(), device);
+        circuit.setupConnection();
+        HardwareToken token = new HardwareToken(circuit, device, null);
+        devicesViewModel.post(token);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == REQUEST_BLUETOOTH_PERMISSIONS){
+        if (requestCode == REQUEST_BLUETOOTH_PERMISSIONS) {
             Log.v("Devices", "Requested permissions received");
-            if (grantResults.length == 3 && grantResults[0] == PERMISSION_GRANTED || grantResults[1] == PERMISSION_GRANTED || grantResults[2] == PERMISSION_GRANTED){
+            if (grantResults.length == 3 && grantResults[0] == PERMISSION_GRANTED || grantResults[1] == PERMISSION_GRANTED || grantResults[2] == PERMISSION_GRANTED) {
                 scanButton.setEnabled(true);
             }
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Subscribe
+    public void onBleTokenDisconnect(KillswitchBluetoothGracefulDisconnect event) {
+        KillswitchDeviceAdministrator killswitch = KillswitchApplication.getInstance(getActivity()).getKillswitch();
+        killswitch.unbindCircuit();
+        getActivity().runOnUiThread(() -> {
+            scanButton.setEnabled(!killswitch.isArmed() || killswitch.getBoundCircuit() == null);
+            scanButton.setText(R.string.label_ble_scan);
+            bleDevice.setText("");
+        });
     }
 }

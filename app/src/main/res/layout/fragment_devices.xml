@@ -9,6 +9,7 @@
         android:layout_height="60dp"
         android:layout_alignParentBottom="true"
         android:id="@+id/spacer_devices_bottom"/>
+    <!-- BLE -->
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -38,6 +39,7 @@
         android:layout_height="20dp"
         android:id="@+id/spacer_devices_middle"
         android:layout_above="@+id/button_ble_scan"/>
+    <!-- USB -->
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -46,7 +48,8 @@
         android:scaleType="fitCenter"
         android:layout_above="@+id/spacer_devices_middle"
         android:layout_alignTop="@+id/button_usb_lock"
-        android:tint="@color/color_n"/>
+        android:tint="@color/color_n"
+        android:visibility="gone"/>
     <ToggleButton
         android:layout_width="120dp"
         android:layout_height="wrap_content"
@@ -54,7 +57,8 @@
         android:layout_alignParentRight="true"
         android:id="@+id/button_usb_lock"
         android:textOn="@string/label_usb_unlock"
-        android:textOff="@string/label_usb_lock"/>
+        android:textOff="@string/label_usb_lock"
+        android:visibility="gone"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -62,5 +66,6 @@
         android:layout_toRightOf="@+id/icon_usb"
         android:layout_toLeftOf="@+id/button_usb_lock"
         android:layout_alignTop="@+id/button_usb_lock"
-        android:id="@+id/text_usb_token"/>
+        android:id="@+id/text_usb_token"
+        android:visibility="gone"/>
 </RelativeLayout>

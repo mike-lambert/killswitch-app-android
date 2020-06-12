@@ -7,4 +7,5 @@ public interface HardwareCircuit {
     boolean ping();
     CircuitState state();
     void disconnect();
+    String getName();
 }
