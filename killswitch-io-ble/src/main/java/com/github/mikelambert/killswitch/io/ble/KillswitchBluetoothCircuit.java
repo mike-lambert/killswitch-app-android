@@ -156,7 +156,7 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     private void ledOff() {
         Log.v("BLE", "LED OFF");
         BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
-        cled.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+        //cled.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
         cled.setValue(KILLSWITCH_LED_OFF);
         gatt.writeCharacteristic(cled);
         try {

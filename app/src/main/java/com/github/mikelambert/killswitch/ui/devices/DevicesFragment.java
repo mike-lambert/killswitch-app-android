@@ -86,9 +86,9 @@ public class DevicesFragment extends Fragment {
         bleDevice.setOnClickListener(view -> {
             KillswitchDeviceAdministrator killswitch = KillswitchApplication.getInstance(getActivity()).getKillswitch();
             if (!killswitch.isArmed() && killswitch.getBoundCircuit() != null) {
-                killswitch.unbindCircuit();
                 if (killswitch.getBoundCircuit() != null) {
                     killswitch.getBoundCircuit().disconnect();
+                    killswitch.unbindCircuit();
                 }
                 devicesViewModel.post(null);
             }
