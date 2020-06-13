@@ -22,8 +22,10 @@
     <string name="label_click_count">Кликов для срабатывания</string>
     <!-- BLE -->
     <string name="label_ble_device">BLE-устройство</string>
-    <string name="label_ble_scan">Связать ...</string>
+    <string name="label_ble_scan">Связать …</string>
     <string name="label_ble_unbind">Отвязать</string>
+    <string name="label_discovery_dismiss">Отмена</string>
+    <string name="label_discovery_refresh">Обновить</string>
     <!--USB -->
     <string name="label_usb_lock">Подключиться</string>
     <string name="label_usb_unlock">Отключиться</string>
