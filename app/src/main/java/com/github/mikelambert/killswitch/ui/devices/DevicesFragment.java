@@ -154,13 +154,11 @@ public class DevicesFragment extends Fragment {
     }
 
     private void discoverButtonDevices() {
-        startDiscoveryClassic();
-        /*
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startDiscoveryCompanionApi();
         } else {
             startDiscoveryClassic();
-        }*/
+        }
     }
 
     private void startDiscoveryClassic() {
