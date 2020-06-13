@@ -17,6 +17,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -35,7 +36,7 @@ import com.github.mikelambert.killswitch.R;
 import com.github.mikelambert.killswitch.common.HardwareCircuit;
 import com.github.mikelambert.killswitch.common.KillswitchDeviceAdministrator;
 import com.github.mikelambert.killswitch.event.KillswitchBluetoothGracefulDisconnect;
-import com.github.mikelambert.killswitch.io.ble.BluetoothDiscoveryEventReceiver;
+import com.github.mikelambert.killswitch.io.ble.BluetoothDiscovery;
 import com.github.mikelambert.killswitch.io.ble.KillswitchBluetoothCircuit;
 import com.github.mikelambert.killswitch.model.adapter.BluetoothDeviceListViewAdapter;
 
@@ -75,6 +76,7 @@ public class DevicesFragment extends Fragment {
                 scanButton.setText(R.string.label_ble_unbind);
             } else {
                 bleDevice.setText("");
+                scanButton.setText(R.string.label_ble_scan);
             }
         });
 
@@ -177,26 +179,40 @@ public class DevicesFragment extends Fragment {
         final ListView listDevices = popupView.findViewById(R.id.ble_discovery_devices);
         // data providers
         final BluetoothDeviceListViewAdapter adapter = BluetoothDeviceListViewAdapter.create(getActivity());
-        final BluetoothDiscoveryEventReceiver receiver = BluetoothDiscoveryEventReceiver.registerReceiver(getActivity());
-        receiver.setCallback(adapter);
         listDevices.setAdapter(adapter);
+        final BluetoothDiscovery discovery = BluetoothDiscovery.createScanner(adapter);
+
         // callbacks
         buttonDismiss.setOnClickListener(view -> {
             popupWindow.dismiss();
         });
 
         buttonRefresh.setOnClickListener(view -> {
-            receiver.startDiscovery();
+            discovery.startDiscovery();
+        });
+        listDevices.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                popupWindow.dismiss();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
         });
         // show the popup window
         // which view you pass in doesn't matter, it is only used for the window tolken
-
+        discovery.startDiscovery();
         popupWindow.showAtLocation(rootView, Gravity.CENTER, 0, 0);
         popupWindow.setOnDismissListener(() -> {
-            getActivity().unregisterReceiver(receiver);
+            discovery.stopDiscovery();
             BluetoothDevice selected = adapter.getSelectedDevice();
             if (selected != null){
                 Log.v("Devices", selected.toString());
+                bindCircuit(selected);
+            } else {
+                devicesViewModel.post(null);
             }
         });
     }
@@ -264,10 +280,10 @@ public class DevicesFragment extends Fragment {
             Log.v("Devices", "No BLE device acquired");
             return;
         }
-        boundCircuit(device);
+        bindCircuit(device);
     }
 
-    private void boundCircuit(BluetoothDevice device) {
+    private void bindCircuit(BluetoothDevice device) {
         Log.v("Devices", "Bonding with " + device.getName() + "; MAC " + device.getAddress());
         device.createBond();
         KillswitchBluetoothCircuit circuit = new KillswitchBluetoothCircuit(getActivity(), device);
