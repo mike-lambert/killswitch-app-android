@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:theme="@style/Theme.AppCompat.Light"
-    android:background="@android:color/white">
+    android:background="@android:color/background_light">
     <Space
         android:layout_width="40dp"
         android:layout_height="40dp"
@@ -32,10 +34,13 @@
         android:id="@+id/ble_discovery_spacer_middle"
         android:layout_above="@+id/button_discovery_dismiss"
         />
+
     <ListView
+        android:id="@+id/ble_discovery_devices"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/ble_discovery_spacer_middle"
-        android:id="@+id/ble_discovery_devices"
-        />
+        android:choiceMode="singleChoice"
+        android:theme="@style/Theme.AppCompat.Light"
+        tools:listitem="@layout/item_ble_device" />
 </RelativeLayout>
