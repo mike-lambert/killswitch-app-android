@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:theme="@style/Theme.AppCompat.Light"
-    android:background="@android:color/background_light"
+    android:background="@drawable/popup_background"
     android:maxHeight="400dp"
     android:minHeight="400dp">
     <Space
@@ -20,7 +20,9 @@
         android:id="@+id/button_discovery_dismiss"
         android:text="@string/label_discovery_dismiss"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentBottom="true"/>
+        android:layout_alignParentBottom="true"
+        android:layout_marginLeft="12dp"
+        android:layout_marginBottom="4dp"/>
     <Button
         android:layout_width="120dp"
         android:layout_height="wrap_content"
@@ -28,6 +30,8 @@
         android:id="@+id/button_discovery_refresh"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
+        android:layout_marginRight="12dp"
+        android:layout_marginBottom="4dp"
         android:foregroundTint="@color/colorAccent"
         />
     <Space
@@ -44,5 +48,8 @@
         android:layout_above="@+id/ble_discovery_spacer_middle"
         android:choiceMode="singleChoice"
         android:theme="@style/Theme.AppCompat.Light"
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
         tools:listitem="@layout/item_ble_device" />
 </RelativeLayout>

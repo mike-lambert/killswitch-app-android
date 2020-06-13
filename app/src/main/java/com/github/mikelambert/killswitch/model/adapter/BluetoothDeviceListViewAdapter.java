@@ -5,7 +5,9 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -39,6 +41,11 @@ public class BluetoothDeviceListViewAdapter extends ArrayAdapter<BluetoothDevice
 
         name.setOnClickListener(view -> {
             selected = device;
+            ListView discovered = parent.findViewById(R.id.ble_discovery_devices);
+            AdapterView.OnItemSelectedListener onSelect = discovered.getOnItemSelectedListener();
+            if (onSelect != null){
+                onSelect.onItemSelected(null, view, position, view.getId());
+            }
         });
         // Return the completed view to render on screen
         return convertView;
