@@ -31,7 +31,6 @@ import com.github.mikelambert.killswitch.common.HardwareCircuit;
 import com.github.mikelambert.killswitch.common.KillswitchDeviceAdministrator;
 import com.github.mikelambert.killswitch.event.KillswitchBluetoothGracefulDisconnect;
 import com.github.mikelambert.killswitch.io.ble.KillswitchBluetoothCircuit;
-import com.github.mikelambert.killswitch.model.HardwareToken;
 
 import org.greenrobot.eventbus.Subscribe;
 
@@ -46,7 +45,7 @@ public class DevicesFragment extends Fragment {
     private DevicesViewModel devicesViewModel;
     private Button scanButton;
     private TextView bleDevice;
-    private HardwareToken last;
+    private HardwareCircuit last;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -61,8 +60,8 @@ public class DevicesFragment extends Fragment {
             KillswitchDeviceAdministrator killswitch = KillswitchApplication.getInstance(getActivity()).getKillswitch();
             scanButton.setEnabled(!killswitch.isArmed() || killswitch.getBoundCircuit() == null);
             if (last != null) {
-                bleDevice.setText(last.getCircuit().getName());
-                killswitch.bindCircuit(last.getCircuit());
+                bleDevice.setText(last.getName());
+                killswitch.bindCircuit(last);
                 scanButton.setText(R.string.label_ble_unbind);
             } else {
                 bleDevice.setText("");
@@ -213,8 +212,7 @@ public class DevicesFragment extends Fragment {
         device.createBond();
         KillswitchBluetoothCircuit circuit = new KillswitchBluetoothCircuit(getActivity(), device);
         circuit.setupConnection();
-        HardwareToken token = new HardwareToken(circuit, device, null);
-        devicesViewModel.post(token);
+        devicesViewModel.post(circuit);
     }
 
     @Override
