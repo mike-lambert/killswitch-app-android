@@ -13,13 +13,19 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelUuid;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -30,12 +36,14 @@ import com.github.mikelambert.killswitch.R;
 import com.github.mikelambert.killswitch.common.HardwareCircuit;
 import com.github.mikelambert.killswitch.common.KillswitchDeviceAdministrator;
 import com.github.mikelambert.killswitch.event.KillswitchBluetoothGracefulDisconnect;
+import com.github.mikelambert.killswitch.io.ble.BluetoothDiscovery;
 import com.github.mikelambert.killswitch.io.ble.KillswitchBluetoothCircuit;
-import com.github.mikelambert.killswitch.model.HardwareToken;
+import com.github.mikelambert.killswitch.model.adapter.BluetoothDeviceListViewAdapter;
 
 import org.greenrobot.eventbus.Subscribe;
 
 import static android.app.Activity.RESULT_OK;
+import static android.content.Context.LAYOUT_INFLATER_SERVICE;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static com.github.mikelambert.killswitch.io.ble.KillswitchBluetoothCircuit.UUID_KILLSWITCH_BLE_SERVICE_PING;
 
@@ -46,12 +54,14 @@ public class DevicesFragment extends Fragment {
     private DevicesViewModel devicesViewModel;
     private Button scanButton;
     private TextView bleDevice;
-    private HardwareToken last;
+    private HardwareCircuit last;
+    private View rootView;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         devicesViewModel = ViewModelProviders.of(this).get(DevicesViewModel.class);
         View root = inflater.inflate(R.layout.fragment_devices, container, false);
+        this.rootView = root;
         scanButton = root.findViewById(R.id.button_ble_scan);
         bleDevice = root.findViewById(R.id.text_ble_token);
         scanButton.setEnabled(false);
@@ -61,11 +71,12 @@ public class DevicesFragment extends Fragment {
             KillswitchDeviceAdministrator killswitch = KillswitchApplication.getInstance(getActivity()).getKillswitch();
             scanButton.setEnabled(!killswitch.isArmed() || killswitch.getBoundCircuit() == null);
             if (last != null) {
-                bleDevice.setText(last.getCircuit().getName());
-                killswitch.bindCircuit(last.getCircuit());
+                bleDevice.setText(last.getName());
+                killswitch.bindCircuit(last);
                 scanButton.setText(R.string.label_ble_unbind);
             } else {
                 bleDevice.setText("");
+                scanButton.setText(R.string.label_ble_scan);
             }
         });
 
@@ -81,7 +92,7 @@ public class DevicesFragment extends Fragment {
                 scanButton.setText(R.string.label_ble_scan);
             } else {
                 scanButton.setText(R.string.label_ble_unbind);
-                discoverCompanions();
+                discoverButtonDevices();
             }
         });
 
@@ -142,44 +153,102 @@ public class DevicesFragment extends Fragment {
         return ContextCompat.checkSelfPermission(getActivity(), permission) == PERMISSION_GRANTED;
     }
 
-    private void discoverCompanions() {
+    private void discoverButtonDevices() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CompanionDeviceManager deviceManager = getActivity().getSystemService(CompanionDeviceManager.class);
-            Log.v("Devices", "Building filter");
-            BluetoothLeDeviceFilter leFilter = new BluetoothLeDeviceFilter.Builder()
-                    .setScanFilter(
-                            new ScanFilter.Builder()
-                                    .setServiceData(new ParcelUuid(UUID_KILLSWITCH_BLE_SERVICE_PING), null)
-                                    .build()
-                    )
-                    .build();
-            AssociationRequest pairingRequest = new AssociationRequest.Builder()
-                    .addDeviceFilter(leFilter)
-                    .setSingleDevice(false)
-                    .build();
-
-            Log.v("Devices", "Requesting association");
-            deviceManager.associate(pairingRequest,
-                    new CompanionDeviceManager.Callback() {
-                        @Override
-                        public void onDeviceFound(IntentSender chooserLauncher) {
-                            try {
-                                startIntentSenderForResult(chooserLauncher, REQUEST_PAIR_DEVICE, null, 0, 0, 0, null);
-                            } catch (IntentSender.SendIntentException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(CharSequence error) {
-                            Log.v("Devices", error.toString());
-                        }
-                    },
-                    null);
+            startDiscoveryCompanionApi();
         } else {
-            // TODO: implement scanning classically
-            Log.v("Devices", "CLASSIC SCAN NOT IMPLEMENTED");
+            startDiscoveryClassic();
         }
+    }
+
+    private void startDiscoveryClassic() {
+        // inflate the layout of the popup window
+        LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(LAYOUT_INFLATER_SERVICE);
+        View popupView = inflater.inflate(R.layout.popup_discovery_ble, null);
+
+        // create the popup window
+        int width = LinearLayout.LayoutParams.WRAP_CONTENT;
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+        boolean focusable = false; // lets taps outside the popup also dismiss it
+        final PopupWindow popupWindow = new PopupWindow(popupView, width, 600, focusable);
+
+        final Button buttonDismiss = popupView.findViewById(R.id.button_discovery_dismiss);
+        final Button buttonRefresh = popupView.findViewById(R.id.button_discovery_refresh);
+        final ListView listDevices = popupView.findViewById(R.id.ble_discovery_devices);
+        // data providers
+        final BluetoothDeviceListViewAdapter adapter = BluetoothDeviceListViewAdapter.create(getActivity());
+        listDevices.setAdapter(adapter);
+        final BluetoothDiscovery discovery = BluetoothDiscovery.createScanner(adapter);
+
+        // callbacks
+        buttonDismiss.setOnClickListener(view -> {
+            popupWindow.dismiss();
+        });
+
+        buttonRefresh.setOnClickListener(view -> {
+            discovery.startDiscovery();
+        });
+        listDevices.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                popupWindow.dismiss();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        // show the popup window
+        // which view you pass in doesn't matter, it is only used for the window tolken
+        discovery.startDiscovery();
+        popupWindow.showAtLocation(rootView, Gravity.CENTER, 0, 0);
+        popupWindow.setOnDismissListener(() -> {
+            discovery.stopDiscovery();
+            BluetoothDevice selected = adapter.getSelectedDevice();
+            if (selected != null){
+                Log.v("Devices", selected.toString());
+                bindCircuit(selected);
+            } else {
+                devicesViewModel.post(null);
+            }
+        });
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void startDiscoveryCompanionApi() {
+        CompanionDeviceManager deviceManager = getActivity().getSystemService(CompanionDeviceManager.class);
+        Log.v("Devices", "Building filter");
+        BluetoothLeDeviceFilter leFilter = new BluetoothLeDeviceFilter.Builder()
+                .setScanFilter(
+                        new ScanFilter.Builder()
+                                .setServiceData(new ParcelUuid(UUID_KILLSWITCH_BLE_SERVICE_PING), null)
+                                .build()
+                )
+                .build();
+        AssociationRequest pairingRequest = new AssociationRequest.Builder()
+                .addDeviceFilter(leFilter)
+                .setSingleDevice(false)
+                .build();
+
+        Log.v("Devices", "Requesting association");
+        deviceManager.associate(pairingRequest,
+                new CompanionDeviceManager.Callback() {
+                    @Override
+                    public void onDeviceFound(IntentSender chooserLauncher) {
+                        try {
+                            startIntentSenderForResult(chooserLauncher, REQUEST_PAIR_DEVICE, null, 0, 0, 0, null);
+                        } catch (IntentSender.SendIntentException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(CharSequence error) {
+                        Log.v("Devices", error.toString());
+                    }
+                },
+                null);
     }
 
     @Override
@@ -209,12 +278,15 @@ public class DevicesFragment extends Fragment {
             Log.v("Devices", "No BLE device acquired");
             return;
         }
+        bindCircuit(device);
+    }
+
+    private void bindCircuit(BluetoothDevice device) {
         Log.v("Devices", "Bonding with " + device.getName() + "; MAC " + device.getAddress());
         device.createBond();
         KillswitchBluetoothCircuit circuit = new KillswitchBluetoothCircuit(getActivity(), device);
         circuit.setupConnection();
-        HardwareToken token = new HardwareToken(circuit, device, null);
-        devicesViewModel.post(token);
+        devicesViewModel.post(circuit);
     }
 
     @Override
