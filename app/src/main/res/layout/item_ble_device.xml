@@ -22,5 +22,5 @@
         android:textStyle="bold"
         android:textSize="22dp"
         android:text="@string/label_click_count"
-        android:id="@+id/item_dle_device_name"/>
+        android:id="@+id/item_ble_device_name"/>
 </LinearLayout>
