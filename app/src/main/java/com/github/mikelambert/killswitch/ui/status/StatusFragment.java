@@ -3,6 +3,7 @@ package com.github.mikelambert.killswitch.ui.status;
 import android.app.admin.DevicePolicyManager;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -162,6 +163,10 @@ public class StatusFragment extends Fragment {
     }
 
     private int colorResource(int colorId) {
-        return getResources().getColor(colorId, getActivity().getTheme());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return getResources().getColor(colorId, getActivity().getTheme());
+        } else {
+            return getResources().getColor(colorId);
+        }
     }
 }

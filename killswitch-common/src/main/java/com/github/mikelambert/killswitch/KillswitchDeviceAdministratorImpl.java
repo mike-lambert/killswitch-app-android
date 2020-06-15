@@ -1,5 +1,6 @@
 package com.github.mikelambert.killswitch;
 
+import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -9,6 +10,7 @@ import android.util.Log;
 
 import com.github.mikelambert.killswitch.common.HardwareCircuit;
 import com.github.mikelambert.killswitch.common.KillswitchDeviceAdministrator;
+import com.github.mikelambert.killswitch.common.service.CircuitMonitorService;
 import com.github.mikelambert.killswitch.event.KillswitchAdminStatus;
 import com.github.mikelambert.killswitch.event.KillswitchArmedStatus;
 import com.github.mikelambert.killswitch.persistence.PersistentState;
@@ -164,29 +166,23 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     }
 
     @Override
-    public void bindCircuit(HardwareCircuit circuit) {
+    public void bindCircuit(HardwareCircuit circuit, Activity initiator) {
         if (this.circuit == null){
             this.circuit = circuit;
             if (isArmed()){
                 circuit.lockOn(true);
             }
-            startMonitor();
+            CircuitMonitorService.startService(initiator);
         }
     }
 
     @Override
-    public void unbindCircuit() {
+    public void unbindCircuit(Activity initiator) {
         if (!isArmed() && circuit != null){
-            stopMonitor();
+            CircuitMonitorService.stopService(initiator);
             circuit.unlock();
             circuit = null;
         }
-    }
-
-    private void stopMonitor() {
-    }
-
-    private void startMonitor() {
     }
 
     private boolean isAdminActive() {
