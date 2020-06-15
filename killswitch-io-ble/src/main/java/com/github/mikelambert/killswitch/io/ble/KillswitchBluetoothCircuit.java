@@ -136,7 +136,7 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
                 long now = System.currentTimeMillis();
                 pingLock.wait(5000L);
                 long end = System.currentTimeMillis();
-                return end - now <= 5000;
+                return end - now < 5000;
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 return false;
