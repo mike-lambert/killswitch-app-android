@@ -72,7 +72,7 @@ public class DevicesFragment extends Fragment {
             scanButton.setEnabled(!killswitch.isArmed() || killswitch.getBoundCircuit() == null);
             if (last != null) {
                 bleDevice.setText(last.getName());
-                killswitch.bindCircuit(last);
+                killswitch.bindCircuit(last, getActivity());
                 scanButton.setText(R.string.label_ble_unbind);
             } else {
                 bleDevice.setText("");
@@ -86,7 +86,7 @@ public class DevicesFragment extends Fragment {
             if (circuit != null) {
                 if (!killswitch.isArmed() && killswitch.getBoundCircuit() != null) {
                     killswitch.getBoundCircuit().disconnect();
-                    killswitch.unbindCircuit();
+                    killswitch.unbindCircuit(getActivity());
                     devicesViewModel.post(null);
                 }
                 scanButton.setText(R.string.label_ble_scan);
@@ -101,7 +101,7 @@ public class DevicesFragment extends Fragment {
             if (!killswitch.isArmed() && killswitch.getBoundCircuit() != null) {
                 if (killswitch.getBoundCircuit() != null) {
                     killswitch.getBoundCircuit().disconnect();
-                    killswitch.unbindCircuit();
+                    killswitch.unbindCircuit(getActivity());
                 }
                 devicesViewModel.post(null);
             }
@@ -303,7 +303,7 @@ public class DevicesFragment extends Fragment {
     @Subscribe
     public void onBleTokenDisconnect(KillswitchBluetoothGracefulDisconnect event) {
         KillswitchDeviceAdministrator killswitch = KillswitchApplication.getInstance(getActivity()).getKillswitch();
-        killswitch.unbindCircuit();
+        killswitch.unbindCircuit(getActivity());
         getActivity().runOnUiThread(() -> {
             scanButton.setEnabled(!killswitch.isArmed() || killswitch.getBoundCircuit() == null);
             scanButton.setText(R.string.label_ble_scan);

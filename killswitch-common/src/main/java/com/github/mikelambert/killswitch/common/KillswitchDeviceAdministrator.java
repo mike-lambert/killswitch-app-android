@@ -1,5 +1,6 @@
 package com.github.mikelambert.killswitch.common;
 
+import android.app.Activity;
 import android.content.ComponentName;
 
 import com.github.mikelambert.killswitch.persistence.PersistentState;
@@ -18,6 +19,6 @@ public interface KillswitchDeviceAdministrator {
     ComponentName getAdminComponentName();
     PersistentState currentState();
     HardwareCircuit getBoundCircuit();
-    void bindCircuit(HardwareCircuit circuit);
-    void unbindCircuit();
+    void bindCircuit(HardwareCircuit circuit, Activity initiator);
+    void unbindCircuit(Activity initiator);
 }

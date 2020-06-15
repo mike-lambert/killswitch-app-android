@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="monitor_title">Killswitch</string>
+    <string name="monitor_text">Killswitch запущен</string>
+</resources>
