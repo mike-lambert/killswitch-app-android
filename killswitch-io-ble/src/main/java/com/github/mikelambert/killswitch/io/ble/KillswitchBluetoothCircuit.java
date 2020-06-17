@@ -1,5 +1,6 @@
 package com.github.mikelambert.killswitch.io.ble;
 
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
@@ -41,7 +42,6 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     private final Object pingLock;
     private BluetoothGatt gatt;
     private BluetoothGattService servicePing;
-    //private BluetoothGattService serviceLed;
     private boolean locked;
     private boolean fireOnDisconnect;
     private CircuitState state;
@@ -57,7 +57,26 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
         this.state = CircuitState.OFFLINE;
     }
 
-    public void setupConnection() {
+    public KillswitchBluetoothCircuit(Context context, String descriptor) {
+        this.pingLock = new Object();
+        this.context = context;
+        this.pool = Executors.newFixedThreadPool(6);
+        this.state = CircuitState.OFFLINE;
+        BluetoothDevice dev = null;
+        for(BluetoothDevice d : BluetoothAdapter.getDefaultAdapter().getBondedDevices()) {
+            if (descriptor.equals(d.getAddress())) {
+                Log.v("BLE", "Found bonded device " + d);
+                dev = d;
+                break;
+            }
+        }
+        if (dev == null){
+            throw new IllegalStateException("Not found in bonded devices: " + descriptor);
+        }
+        this.device = dev;
+    }
+
+    public void connect() {
         gatt = device.connectGatt(context, false,
                 new BluetoothGattCallback() {
                     @Override
@@ -117,6 +136,11 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     }
 
     @Override
+    public boolean isConnected() {
+        return device != null && gatt != null && servicePing != null;
+    }
+
+    @Override
     public void lockOn(boolean fireOnDisconnect) {
         Log.v("BLE", "Locked on to token");
         locked = true;
@@ -162,6 +186,11 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     @Override
     public String getName() {
         return device != null ? device.getName() : "";
+    }
+
+    @Override
+    public String getDescriptor() {
+        return device != null ? device.getAddress() : null;
     }
 
     private void subscribeToKillswitchService() {
@@ -317,7 +346,7 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
             while (true) {
                 lastReconnectTime = System.currentTimeMillis();
                 try {
-                    setupConnection();
+                    connect();
                 } catch (Exception e) {
                     Log.w("BLE", "reconnect failed", e);
                 } finally {

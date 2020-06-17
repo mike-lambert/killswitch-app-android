@@ -285,7 +285,7 @@ public class DevicesFragment extends Fragment {
         Log.v("Devices", "Bonding with " + device.getName() + "; MAC " + device.getAddress());
         device.createBond();
         KillswitchBluetoothCircuit circuit = new KillswitchBluetoothCircuit(getActivity(), device);
-        circuit.setupConnection();
+        circuit.connect();
         devicesViewModel.post(circuit);
     }
 

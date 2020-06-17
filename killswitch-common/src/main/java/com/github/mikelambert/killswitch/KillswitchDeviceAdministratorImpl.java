@@ -4,22 +4,29 @@ import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.core.content.ContextCompat;
+
+import com.github.mikelambert.killswitch.common.CircuitFactoryRegistry;
 import com.github.mikelambert.killswitch.common.HardwareCircuit;
 import com.github.mikelambert.killswitch.common.KillswitchDeviceAdministrator;
 import com.github.mikelambert.killswitch.common.service.CircuitMonitorService;
 import com.github.mikelambert.killswitch.event.KillswitchAdminStatus;
 import com.github.mikelambert.killswitch.event.KillswitchArmedStatus;
+import com.github.mikelambert.killswitch.event.KillswitchBluetoothGracefulDisconnect;
 import com.github.mikelambert.killswitch.persistence.PersistentState;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY;
 import static android.app.admin.DevicePolicyManager.WIPE_EXTERNAL_STORAGE;
 import static com.github.mikelambert.killswitch.common.Intents.TRIGGER_ACTION_WIPE;
+import static com.github.mikelambert.killswitch.common.service.CircuitMonitorService.EXTRA_ACTIVITY_CLASS;
 
 public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdministrator {
     public static final String KILLSWITCH_PREFERENCE_ID = "KILLSWITCH_PREFERENCES";
@@ -27,6 +34,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     public static final String STATE_FIELD_WIPE_SD = "isWipeSdCard";
     public static final String STATE_FIELD_TRIGGER_MULTICLICK = "triggerUseMulticlick";
     public static final String STATE_FIELD_MULTICLICK_COUNT = "multiclickCounter";
+    public static final String STATE_FIELD_DEVICE = "device";
 
     private final Context context;
     private final DevicePolicyManager devicePolicyManager;
@@ -44,6 +52,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
         action = TRIGGER_ACTION_WIPE;
         eventBus = KillswitchApplication.getEventBus(context);
         preferences = this.context.getSharedPreferences(KILLSWITCH_PREFERENCE_ID, Context.MODE_PRIVATE);
+        KillswitchApplication.getEventBus(context).register(this);
         refreshState();
         onStarted();
     }
@@ -68,6 +77,11 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
             Log.v(this.getClass().getSimpleName(), "ARMED: securing keyguard");
             Log.v(this.getClass().getSimpleName(), "ARMED: locking screen");
             if (circuit != null){
+                if (!circuit.isConnected()) {
+                    Log.v(this.getClass().getSimpleName(), "Connecting circuit");
+                    circuit.connect();
+                }
+                Log.v(this.getClass().getSimpleName(), "Locking on circuit");
                 circuit.lockOn(true); // TODO: settings
             }
             eventBus.post(new KillswitchArmedStatus(true));
@@ -81,6 +95,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
             state.setArmed(false);
             saveState();
             if (circuit != null){
+                Log.v(this.getClass().getSimpleName(), "Unlocking circuit");
                 circuit.unlock();
             }
             Log.v(this.getClass().getSimpleName(), "DISARMED: relaxing keyguard");
@@ -96,7 +111,6 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
         }
         Log.v(this.getClass().getSimpleName(), "SETTINGS UPDATED");
         refreshState();
-        //onStarted();
     }
 
     @Override
@@ -119,15 +133,52 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     @Override
     public void onStarted() {
         Log.v(this.getClass().getSimpleName(), "STARTUP");
-        if (isAdminActive()){
-            onEnabled();
-        } else {
-            onDisabled();
+        processAdminState();
+        rebindDevice();
+        processArmedState();
+    }
+
+    private void rebindDevice() {
+        if (!state.getBoundedDevice().trim().isEmpty()) {
+            Log.v(this.getClass().getSimpleName(), "Re-acquiring device " + state.getBoundedDevice());
+            if (this.circuit == null){
+                this.circuit = CircuitFactoryRegistry.getByDescriptor(state.getBoundedDevice()).get(context, state.getBoundedDevice());
+                Log.v(this.getClass().getSimpleName(), "Circuit: " + circuit);
+                saveState();
+                if (!circuit.isConnected()){
+                    Log.v(this.getClass().getSimpleName(), "Connecting circuit");
+                    circuit.connect();
+                }
+                if (isArmed()){
+                    Log.v(this.getClass().getSimpleName(), "Locking on circuit");
+                    circuit.lockOn(true);
+                }
+                Log.v(this.getClass().getSimpleName(), "Starting monitor");
+                // start monitor
+                startMonitor();
+            }
         }
+    }
+
+    private void startMonitor() {
+        Intent serviceIntent = new Intent(context, CircuitMonitorService.class);
+        serviceIntent.putExtra(EXTRA_ACTIVITY_CLASS, "com.github.mikelambert.killswitch.MainActivity"); // dirty hack
+        ContextCompat.startForegroundService(context, serviceIntent);
+    }
+
+    private void processArmedState() {
         if (state.isArmed()){
             onArmed();
         } else {
             onDisarmed();
+        }
+    }
+
+    private void processAdminState() {
+        if (isAdminActive()){
+            onEnabled();
+        } else {
+            onDisabled();
         }
     }
 
@@ -168,21 +219,42 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     @Override
     public void bindCircuit(HardwareCircuit circuit, Activity initiator) {
         if (this.circuit == null){
+            Log.v(this.getClass().getSimpleName(), "Binding circuit " + circuit.getDescriptor());
             this.circuit = circuit;
+            if (!circuit.isConnected()){
+                Log.v(this.getClass().getSimpleName(), "Connecting circuit");
+                circuit.connect();
+            }
             if (isArmed()){
+                Log.v(this.getClass().getSimpleName(), "Locking on circuit");
                 circuit.lockOn(true);
             }
+            Log.v(this.getClass().getSimpleName(), "Starting monitor");
             CircuitMonitorService.startService(initiator);
         }
+        saveState();
     }
 
     @Override
     public void unbindCircuit(Activity initiator) {
         if (!isArmed() && circuit != null){
+            Log.v(this.getClass().getSimpleName(), "Stopping monitor");
             CircuitMonitorService.stopService(initiator);
+            Log.v(this.getClass().getSimpleName(), "Unlocking circuit");
             circuit.unlock();
             circuit = null;
         }
+        saveState();
+    }
+
+    @Subscribe
+    public void onGracefulDisconnect(KillswitchBluetoothGracefulDisconnect event){
+        Log.v(this.getClass().getSimpleName(), "Graceful disconnect");
+        if (!isArmed() && circuit != null){
+            circuit.unlock();
+            circuit = null;
+        }
+        saveState();
     }
 
     private boolean isAdminActive() {
@@ -209,11 +281,14 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
         boolean wipeSd = preferences.getBoolean(STATE_FIELD_WIPE_SD, false);
         boolean multiclick = preferences.getBoolean(STATE_FIELD_TRIGGER_MULTICLICK, true);
         int counter = preferences.getInt(STATE_FIELD_MULTICLICK_COUNT, 5);
+        String descriptor = preferences.getString(STATE_FIELD_DEVICE, "");
+
         state = new PersistentState();
         state.setArmed(armed);
         state.setWipeSdCard(wipeSd);
         state.setActivateByMulticlick(multiclick);
         state.setClicksCount(counter);
+        state.setBoundedDevice(descriptor);
     }
 
     private synchronized void saveState() {
@@ -222,6 +297,11 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
         editor.putBoolean(STATE_FIELD_WIPE_SD, state.isWipeSdCard());
         editor.putBoolean(STATE_FIELD_TRIGGER_MULTICLICK, state.isActivateByMulticlick());
         editor.putInt(STATE_FIELD_MULTICLICK_COUNT, state.getClicksCount());
+        if (circuit != null && circuit.getDescriptor() != null) {
+            editor.putString(STATE_FIELD_DEVICE, circuit.getDescriptor());
+        } else {
+            editor.putString(STATE_FIELD_DEVICE, "");
+        }
         editor.apply();
     }
 }
