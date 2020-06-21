@@ -30,6 +30,7 @@ public class CircuitMonitorService extends Service {
     private ExecutorService pool;
     private boolean running;
     private Object lock;
+    private Class targetClass;
 
     @Override
     public void onCreate() {
@@ -44,7 +45,8 @@ public class CircuitMonitorService extends Service {
         createNotificationChannel();
         Intent notificationIntent = null;
         try {
-            notificationIntent = new Intent(this, Class.forName(intent.getStringExtra(EXTRA_ACTIVITY_CLASS)));
+            targetClass = Class.forName(intent.getStringExtra(EXTRA_ACTIVITY_CLASS));
+            notificationIntent = new Intent(this, targetClass);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
             return START_STICKY;
@@ -96,14 +98,21 @@ public class CircuitMonitorService extends Service {
         pool.submit(() -> {
             while (running){
                 HardwareCircuit bounded = KillswitchApplication.getInstance(this).getKillswitch().getBoundCircuit();
-                if (bounded != null && bounded.isTarget()){
-                    Log.v("Monitor", "ping circuit");
-                    if (!bounded.ping()) {
-                        Log.w("Monitor", "PING FAILED");
-                    } else {
-                        Log.v("Monitor", "ping ok");
+                if (bounded != null && bounded.isConnected()){
+                    if (bounded.isTarget()){
+                        Log.v("Monitor", "ping circuit");
+                        if (!bounded.ping()) {
+                            Log.w("Monitor", "PING FAILED");
+                        } else {
+                            Log.v("Monitor", "ping ok");
+                        }
                     }
+                } else {
+                    Log.v("Monitor", "device disconnected. Exiting");
+                    this.stopService(new Intent(this, CircuitMonitorService.class));
+                    break;
                 }
+
                 synchronized (lock){
                     try {
                         lock.wait(2000);
