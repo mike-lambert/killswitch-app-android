@@ -63,8 +63,9 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
         this.pool = Executors.newFixedThreadPool(6);
         this.state = CircuitState.OFFLINE;
         BluetoothDevice dev = null;
+        String matchedAddress = descriptor.substring(6);
         for(BluetoothDevice d : BluetoothAdapter.getDefaultAdapter().getBondedDevices()) {
-            if (descriptor.equals(d.getAddress())) {
+            if (matchedAddress.equals(d.getAddress())) {
                 Log.v("BLE", "Found bonded device " + d);
                 dev = d;
                 break;
@@ -176,7 +177,7 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
 
     @Override
     public String getDescriptor() {
-        return device != null ? device.getAddress() : null;
+        return device != null ? "ble://" + device.getAddress() : null;
     }
 
     private void attemptConnect() {
