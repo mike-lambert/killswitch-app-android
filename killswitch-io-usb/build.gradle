@@ -29,7 +29,9 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-
+    implementation project(':killswitch-common')
+    implementation 'org.greenrobot:eventbus:3.2.0'
+    implementation 'com.github.mik3y:usb-serial-for-android:v2.2.3'
     implementation 'androidx.appcompat:appcompat:1.1.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
