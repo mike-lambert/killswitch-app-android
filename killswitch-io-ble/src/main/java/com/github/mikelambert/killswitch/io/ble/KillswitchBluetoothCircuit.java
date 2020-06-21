@@ -1,5 +1,6 @@
 package com.github.mikelambert.killswitch.io.ble;
 
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
@@ -41,7 +42,6 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     private final Object pingLock;
     private BluetoothGatt gatt;
     private BluetoothGattService servicePing;
-    //private BluetoothGattService serviceLed;
     private boolean locked;
     private boolean fireOnDisconnect;
     private CircuitState state;
@@ -57,7 +57,129 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
         this.state = CircuitState.OFFLINE;
     }
 
-    public void setupConnection() {
+    public KillswitchBluetoothCircuit(Context context, String descriptor) {
+        this.pingLock = new Object();
+        this.context = context;
+        this.pool = Executors.newFixedThreadPool(6);
+        this.state = CircuitState.OFFLINE;
+        BluetoothDevice dev = null;
+        for(BluetoothDevice d : BluetoothAdapter.getDefaultAdapter().getBondedDevices()) {
+            if (descriptor.equals(d.getAddress())) {
+                Log.v("BLE", "Found bonded device " + d);
+                dev = d;
+                break;
+            }
+        }
+        if (dev == null){
+            throw new IllegalStateException("Not found in bonded devices: " + descriptor);
+        }
+        this.device = dev;
+    }
+
+    @Override
+    public void connect() {
+        pool.submit(() -> {
+            final Object countdownLock = new Object();
+            while (true) {
+                lastReconnectTime = System.currentTimeMillis();
+                try {
+                    attemptConnect();
+                } catch (Exception e) {
+                    Log.w("BLE", "reconnect failed", e);
+                } finally {
+                    synchronized (countdownLock) {
+                        try {
+                            countdownLock.wait(1000);
+                        } catch (InterruptedException e) {
+
+                        }
+                    }
+                }
+                if (state == CircuitState.ENGAGED) {
+                    Log.v("BLE", "connection re-established");
+                    return;
+                } else if (state == CircuitState.COUNTDOWN || locked ) {
+                    Log.v("BLE", "Countdown: " + (lastReconnectTime - disconnectTime));
+                    if (lastReconnectTime - disconnectTime > 10000) {
+                        Log.v("BLE", "Blackout trigger: " + (lastReconnectTime - disconnectTime));
+                        onTriggered();
+                        return;
+                    }
+                } else {
+                    if (lastReconnectTime - disconnectTime > 10000) {
+                        Log.v("BLE", "Timeout exceeded: " + (lastReconnectTime - disconnectTime) + " @state " + state);
+                        KillswitchApplication.getEventBus(context).post(new KillswitchBluetoothGracefulDisconnect());
+                        return;
+                    }
+                }
+            }
+        });
+    }
+
+    @Override
+    public boolean isTarget() {
+        return locked;
+    }
+
+    @Override
+    public boolean isConnected() {
+        return device != null && gatt != null && servicePing != null;
+    }
+
+    @Override
+    public void lockOn(boolean fireOnDisconnect) {
+        Log.v("BLE", "Locked on to token");
+        locked = true;
+        this.fireOnDisconnect = fireOnDisconnect;
+    }
+
+    @Override
+    public void unlock() {
+        Log.v("BLE", "Locked off from token");
+        locked = false;
+    }
+
+    @Override
+    public boolean ping() {
+        synchronized (pingLock) {
+            try {
+                long now = System.currentTimeMillis();
+                pingLock.wait(5000L);
+                long end = System.currentTimeMillis();
+                return end - now < 5000;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+    }
+
+    @Override
+    public CircuitState state() {
+        return state;
+    }
+
+    @Override
+    public void disconnect() {
+        if (device != null && gatt != null) {
+            Log.v("BLE", "DISCONNECTING");
+            fireOnDisconnect = false;
+            ledOff();
+            gatt.disconnect();
+        }
+    }
+
+    @Override
+    public String getName() {
+        return device != null ? device.getName() : "";
+    }
+
+    @Override
+    public String getDescriptor() {
+        return device != null ? device.getAddress() : null;
+    }
+
+    private void attemptConnect() {
         gatt = device.connectGatt(context, false,
                 new BluetoothGattCallback() {
                     @Override
@@ -111,62 +233,21 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
 
     }
 
-    @Override
-    public boolean isTarget() {
-        return locked;
-    }
-
-    @Override
-    public void lockOn(boolean fireOnDisconnect) {
-        Log.v("BLE", "Locked on to token");
-        locked = true;
-        this.fireOnDisconnect = fireOnDisconnect;
-    }
-
-    @Override
-    public void unlock() {
-        Log.v("BLE", "Locked off from token");
-        locked = false;
-    }
-
-    @Override
-    public boolean ping() {
-        synchronized (pingLock) {
-            try {
-                long now = System.currentTimeMillis();
-                pingLock.wait(5000L);
-                long end = System.currentTimeMillis();
-                return end - now < 5000;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-    }
-
-    @Override
-    public CircuitState state() {
-        return state;
-    }
-
-    @Override
-    public void disconnect() {
-        if (device != null && gatt != null) {
-            Log.v("BLE", "DISCONNECTING");
-            fireOnDisconnect = false;
-            ledOff();
-            gatt.disconnect();
-        }
-    }
-
-    @Override
-    public String getName() {
-        return device != null ? device.getName() : "";
-    }
-
     private void subscribeToKillswitchService() {
+        if (gatt == null){
+            Log.w("BLE", "connection inactive; exiting");
+            return;
+        }
+        if (servicePing == null){
+            Log.w("BLE", "service inactive; exiting");
+            return;
+        }
         synchronized (gatt) {
             BluetoothGattCharacteristic characteristic = servicePing.getCharacteristic(UUID_KILLSWITCH_BLE_PING);
+            if (characteristic == null){
+                Log.w("BLE", "Ping characteristic not supported");
+                return;
+            }
             gatt.setCharacteristicNotification(characteristic, true);
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID_KILLSWITCH_BLE_PING_DESCRIPTOR);
             int properties = characteristic.getProperties();
@@ -204,27 +285,45 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     }
 
     private void ledBlink() {
-        BluetoothGattService serviceLed = gatt.getService(UUID_KILLSWITCH_BLE_SERVICE_LED);
-        BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
-        cled.setValue(KILLSWITCH_LED_BLINK);
-        writeLedState(cled);
-        Log.v("BLE", "LED set blinking");
+        if (gatt != null) {
+            BluetoothGattService serviceLed = gatt.getService(UUID_KILLSWITCH_BLE_SERVICE_LED);
+            if (serviceLed != null) {
+                BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
+                if (cled != null) {
+                    cled.setValue(KILLSWITCH_LED_BLINK);
+                    writeLedState(cled);
+                    Log.v("BLE", "LED set blinking");
+                }
+            }
+        }
     }
 
     private void ledOn() {
-        Log.v("BLE", "LED ON");
-        BluetoothGattService serviceLed = gatt.getService(UUID_KILLSWITCH_BLE_SERVICE_LED);
-        BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
-        cled.setValue(KILLSWITCH_LED_ON);
-        writeLedState(cled);
+        if (gatt != null ) {
+            BluetoothGattService serviceLed = gatt.getService(UUID_KILLSWITCH_BLE_SERVICE_LED);
+            if (serviceLed != null) {
+                BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
+                if (cled != null) {
+                    Log.v("BLE", "LED ON");
+                    cled.setValue(KILLSWITCH_LED_ON);
+                    writeLedState(cled);
+                }
+            }
+        }
     }
 
     private void ledOff() {
-        Log.v("BLE", "LED OFF");
-        BluetoothGattService serviceLed = gatt.getService(UUID_KILLSWITCH_BLE_SERVICE_LED);
-        BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
-        cled.setValue(KILLSWITCH_LED_OFF);
-        writeLedState(cled);
+        if (gatt != null ) {
+            BluetoothGattService serviceLed = gatt.getService(UUID_KILLSWITCH_BLE_SERVICE_LED);
+            if (serviceLed != null) {
+                BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
+                if (cled != null) {
+                    Log.v("BLE", "LED OFF");
+                    cled.setValue(KILLSWITCH_LED_OFF);
+                    writeLedState(cled);
+                }
+            }
+        }
     }
 
     private String hex(byte[] value) {
@@ -237,9 +336,11 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
 
     private void onPayload(byte[] payload) {
         if (payload == null) {
+            Log.w("BLE", "payload is null");
             return;
         }
         if (payload.length < 2) {
+            Log.w("BLE", "payload size mismatch");
             return;
         }
         handleProtocolVer0(payload);
@@ -296,7 +397,7 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
         if (fireOnDisconnect && locked) {
             Log.v("BLE", "Blackout. Reconnecting");
             state = CircuitState.COUNTDOWN;
-            reconnect();
+            connect();
         } else {
             Log.v("BLE", "Graceful offline");
             state = CircuitState.OFFLINE;
@@ -306,48 +407,17 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
 
     private void handleInfrastructure() {
         Log.v("BLE", "Gracefully closing notifications");
-        BluetoothGattCharacteristic characteristic = servicePing.getCharacteristic(UUID_KILLSWITCH_BLE_PING);
-        gatt.setCharacteristicNotification(characteristic, false);
-        gatt.close();
-    }
-
-    private void reconnect() {
-        pool.submit(() -> {
-            final Object countdownLock = new Object();
-            while (true) {
-                lastReconnectTime = System.currentTimeMillis();
-                try {
-                    setupConnection();
-                } catch (Exception e) {
-                    Log.w("BLE", "reconnect failed", e);
-                } finally {
-                    synchronized (countdownLock) {
-                        try {
-                            countdownLock.wait(1000);
-                        } catch (InterruptedException e) {
-
-                        }
-                    }
-                }
-                if (state == CircuitState.ENGAGED) {
-                    Log.v("BLE", "connection re-established");
-                    return;
-                } else if (state == CircuitState.COUNTDOWN) {
-                    Log.v("BLE", "Countdown: " + (lastReconnectTime - disconnectTime));
-                    if (lastReconnectTime - disconnectTime > 10000) {
-                        Log.v("BLE", "Blackout trigger: " + (lastReconnectTime - disconnectTime));
-                        onTriggered();
-                        return;
-                    }
-                } else {
-                    Log.v("BLE", "irreleveant state: " + state);
-                    return;
-                }
-            }
-        });
+        if (servicePing != null && gatt != null) {
+            BluetoothGattCharacteristic characteristic = servicePing.getCharacteristic(UUID_KILLSWITCH_BLE_PING);
+            gatt.setCharacteristicNotification(characteristic, false);
+            gatt.close();
+        }
     }
 
     private void writeLedState(BluetoothGattCharacteristic cled) {
+        if (gatt == null || servicePing == null){
+            return;
+        }
         synchronized (gatt) {
             boolean result = false;
             int i = 0;

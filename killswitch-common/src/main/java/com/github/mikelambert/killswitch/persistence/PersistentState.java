@@ -8,6 +8,7 @@ public class PersistentState {
     private boolean wipeSdCard;
     private boolean activateByMulticlick;
     private int clicksCount;
+    private String boundedDevice;
 
     public static PersistentState cloneState(PersistentState state) {
         PersistentState result = new PersistentState();
@@ -15,6 +16,7 @@ public class PersistentState {
         result.wipeSdCard = state.wipeSdCard;
         result.activateByMulticlick = state.activateByMulticlick;
         result.clicksCount = state.clicksCount;
+        result.boundedDevice = state.boundedDevice;
         return result;
     }
 }
