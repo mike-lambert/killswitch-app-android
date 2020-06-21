@@ -36,6 +36,7 @@ public class KillswitchApplication extends Application {
 
     private KillswitchDeviceAdministrator killswitchDeviceAdministrator;
     private KillswitchEventsReceiver eventsReceiver;
+    private KillswitchShutdownReceiver shutdownReceiver;
     private EventBus eventBus;
 
     @Override
@@ -45,7 +46,7 @@ public class KillswitchApplication extends Application {
         loadFactories();
         killswitchDeviceAdministrator = new KillswitchDeviceAdministratorImpl(this);
         killswitchDeviceAdministrator.onStarted();
-        registerEventsReceiver();
+        registerReceivers();
         registerReceiver(new KillswitchMulticlickReceiver(), new IntentFilter(Intent.ACTION_SCREEN_ON));
         registerReceiver(new KillswitchMulticlickReceiver(), new IntentFilter(Intent.ACTION_SCREEN_OFF));
     }
@@ -68,7 +69,7 @@ public class KillswitchApplication extends Application {
         return getInstance(context).eventBus;
     }
 
-    private void registerEventsReceiver() {
+    private void registerReceivers() {
         eventsReceiver = new KillswitchEventsReceiver();
         final IntentFilter filter = new IntentFilter();
         filter.addAction(EVENT_KILLSWITCH_TRIGGER);
@@ -78,6 +79,10 @@ public class KillswitchApplication extends Application {
             eventsReceiver,
             filter
         );
+        shutdownReceiver = new KillswitchShutdownReceiver();
+        final IntentFilter shutdownFilter = new IntentFilter();
+        shutdownFilter.addAction(Intent.ACTION_SHUTDOWN);
+        registerReceiver(shutdownReceiver, shutdownFilter);
     }
 
     private void loadFactories() {

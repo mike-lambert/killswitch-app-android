@@ -14,7 +14,7 @@ public class KillswitchShutdownReceiver extends BroadcastReceiver {
         if (action != null) {
             HardwareCircuit circuit = KillswitchApplication.getInstance(context).getKillswitch().getBoundCircuit();
             if (circuit != null && circuit.getDescriptor() != null){
-                Log.v(this.getClass().getSimpleName(), action + "Gracefully disconnecting circuit " + circuit.getDescriptor());
+                Log.v(this.getClass().getSimpleName(), action + ": Gracefully disconnecting circuit " + circuit.getDescriptor());
                 circuit.disconnect();
             }
         }
