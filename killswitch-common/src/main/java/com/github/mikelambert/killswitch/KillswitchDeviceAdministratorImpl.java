@@ -76,7 +76,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
             saveState();
             Log.v(this.getClass().getSimpleName(), "ARMED: securing keyguard");
             Log.v(this.getClass().getSimpleName(), "ARMED: locking screen");
-            if (circuit != null){
+            if (circuit != null) {
                 if (!circuit.isConnected()) {
                     Log.v(this.getClass().getSimpleName(), "Connecting circuit");
                     circuit.connect();
@@ -94,7 +94,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
         if (isArmed()) {
             state.setArmed(false);
             saveState();
-            if (circuit != null){
+            if (circuit != null) {
                 Log.v(this.getClass().getSimpleName(), "Unlocking circuit");
                 circuit.unlock();
             }
@@ -105,7 +105,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
 
     @Override
     public void onSettingsUpdated(PersistentState state) {
-        if (state != null){
+        if (state != null) {
             this.state = state;
             saveState();
         }
@@ -115,7 +115,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
 
     @Override
     public void onEnabled() {
-        if (isAdminActive()){
+        if (isAdminActive()) {
             Log.v(this.getClass().getSimpleName(), "ENABLED: ensuring device encryption");
             requireStorageEncryption();
             eventBus.post(new KillswitchAdminStatus(true));
@@ -141,17 +141,17 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     private void rebindDevice() {
         if (!state.getBoundedDevice().trim().isEmpty()) {
             Log.v(this.getClass().getSimpleName(), "Re-acquiring device " + state.getBoundedDevice());
-            if (this.circuit == null){
+            if (this.circuit == null) {
                 this.circuit = CircuitFactoryRegistry.getByDescriptor(state.getBoundedDevice()).get(context, state.getBoundedDevice());
                 Log.v(this.getClass().getSimpleName(), "Circuit: " + circuit);
                 saveState();
-                if (!circuit.isConnected()){
-                    Log.v(this.getClass().getSimpleName(), "Connecting circuit");
-                    circuit.connect();
-                }
-                if (isArmed()){
+                if (isArmed()) {
                     Log.v(this.getClass().getSimpleName(), "Locking on circuit");
                     circuit.lockOn(true);
+                }
+                if (!circuit.isConnected()) {
+                    Log.v(this.getClass().getSimpleName(), "Connecting circuit");
+                    circuit.connect();
                 }
                 Log.v(this.getClass().getSimpleName(), "Starting monitor");
                 // start monitor
@@ -167,7 +167,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     }
 
     private void processArmedState() {
-        if (state.isArmed()){
+        if (state.isArmed()) {
             onArmed();
         } else {
             onDisarmed();
@@ -175,7 +175,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     }
 
     private void processAdminState() {
-        if (isAdminActive()){
+        if (isAdminActive()) {
             onEnabled();
         } else {
             onDisabled();
@@ -194,7 +194,7 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
 
     @Override
     public void disable() {
-        if (!isArmed()){
+        if (!isArmed()) {
             Log.v(this.getClass().getSimpleName(), "DISABLING");
             devicePolicyManager.removeActiveAdmin(adminComponentName);
             onDisabled();
@@ -218,26 +218,27 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
 
     @Override
     public void bindCircuit(HardwareCircuit circuit, Activity initiator) {
-        if (this.circuit == null){
+        if (this.circuit == null) {
             Log.v(this.getClass().getSimpleName(), "Binding circuit " + circuit.getDescriptor());
             this.circuit = circuit;
-            if (!circuit.isConnected()){
-                Log.v(this.getClass().getSimpleName(), "Connecting circuit");
-                circuit.connect();
-            }
-            if (isArmed()){
-                Log.v(this.getClass().getSimpleName(), "Locking on circuit");
-                circuit.lockOn(true);
-            }
-            Log.v(this.getClass().getSimpleName(), "Starting monitor");
-            CircuitMonitorService.startService(initiator);
         }
+        if (!this.circuit.isConnected()) {
+            Log.v(this.getClass().getSimpleName(), "Connecting circuit");
+            this.circuit.connect();
+        }
+        if (isArmed()) {
+            Log.v(this.getClass().getSimpleName(), "Locking on circuit");
+            this.circuit.lockOn(true);
+        }
+        Log.v(this.getClass().getSimpleName(), "Starting monitor");
+        CircuitMonitorService.startService(initiator);
+
         saveState();
     }
 
     @Override
     public void unbindCircuit(Activity initiator) {
-        if (!isArmed() && circuit != null){
+        if (!isArmed() && circuit != null) {
             Log.v(this.getClass().getSimpleName(), "Stopping monitor");
             CircuitMonitorService.stopService(initiator);
             Log.v(this.getClass().getSimpleName(), "Unlocking circuit");
@@ -248,9 +249,9 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     }
 
     @Subscribe
-    public void onGracefulDisconnect(KillswitchBluetoothGracefulDisconnect event){
+    public void onGracefulDisconnect(KillswitchBluetoothGracefulDisconnect event) {
         Log.v(this.getClass().getSimpleName(), "Graceful disconnect");
-        if (!isArmed() && circuit != null){
+        if (!isArmed() && circuit != null) {
             circuit.unlock();
             circuit = null;
         }
@@ -262,10 +263,10 @@ public class KillswitchDeviceAdministratorImpl implements KillswitchDeviceAdmini
     }
 
     private void requireStorageEncryption() {
-        if (isAdminActive()){
+        if (isAdminActive()) {
             int ses = devicePolicyManager.getStorageEncryptionStatus();
             Log.v(this.getClass().getSimpleName(), "Encryption status: " + ses);
-            switch(ses){
+            switch (ses) {
                 case ENCRYPTION_STATUS_ACTIVE_DEFAULT_KEY:
                     Log.v(this.getClass().getSimpleName(), "Forcing storage encryption");
                     devicePolicyManager.setStorageEncryption(adminComponentName, true);

@@ -194,8 +194,20 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     }
 
     private void subscribeToKillswitchService() {
+        if (gatt == null){
+            Log.w("BLE", "connection inactive; exiting");
+            return;
+        }
+        if (servicePing == null){
+            Log.w("BLE", "service inactive; exiting");
+            return;
+        }
         synchronized (gatt) {
             BluetoothGattCharacteristic characteristic = servicePing.getCharacteristic(UUID_KILLSWITCH_BLE_PING);
+            if (characteristic == null){
+                Log.w("BLE", "Ping characteristic not supported");
+                return;
+            }
             gatt.setCharacteristicNotification(characteristic, true);
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID_KILLSWITCH_BLE_PING_DESCRIPTOR);
             int properties = characteristic.getProperties();
@@ -233,27 +245,45 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     }
 
     private void ledBlink() {
-        BluetoothGattService serviceLed = gatt.getService(UUID_KILLSWITCH_BLE_SERVICE_LED);
-        BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
-        cled.setValue(KILLSWITCH_LED_BLINK);
-        writeLedState(cled);
-        Log.v("BLE", "LED set blinking");
+        if (gatt != null) {
+            BluetoothGattService serviceLed = gatt.getService(UUID_KILLSWITCH_BLE_SERVICE_LED);
+            if (serviceLed != null) {
+                BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
+                if (cled != null) {
+                    cled.setValue(KILLSWITCH_LED_BLINK);
+                    writeLedState(cled);
+                    Log.v("BLE", "LED set blinking");
+                }
+            }
+        }
     }
 
     private void ledOn() {
-        Log.v("BLE", "LED ON");
-        BluetoothGattService serviceLed = gatt.getService(UUID_KILLSWITCH_BLE_SERVICE_LED);
-        BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
-        cled.setValue(KILLSWITCH_LED_ON);
-        writeLedState(cled);
+        if (gatt != null ) {
+            BluetoothGattService serviceLed = gatt.getService(UUID_KILLSWITCH_BLE_SERVICE_LED);
+            if (serviceLed != null) {
+                BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
+                if (cled != null) {
+                    Log.v("BLE", "LED ON");
+                    cled.setValue(KILLSWITCH_LED_ON);
+                    writeLedState(cled);
+                }
+            }
+        }
     }
 
     private void ledOff() {
-        Log.v("BLE", "LED OFF");
-        BluetoothGattService serviceLed = gatt.getService(UUID_KILLSWITCH_BLE_SERVICE_LED);
-        BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
-        cled.setValue(KILLSWITCH_LED_OFF);
-        writeLedState(cled);
+        if (gatt != null ) {
+            BluetoothGattService serviceLed = gatt.getService(UUID_KILLSWITCH_BLE_SERVICE_LED);
+            if (serviceLed != null) {
+                BluetoothGattCharacteristic cled = serviceLed.getCharacteristic(UUID_KILLSWITCH_BLE_LED);
+                if (cled != null) {
+                    Log.v("BLE", "LED OFF");
+                    cled.setValue(KILLSWITCH_LED_OFF);
+                    writeLedState(cled);
+                }
+            }
+        }
     }
 
     private String hex(byte[] value) {
@@ -335,9 +365,11 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
 
     private void handleInfrastructure() {
         Log.v("BLE", "Gracefully closing notifications");
-        BluetoothGattCharacteristic characteristic = servicePing.getCharacteristic(UUID_KILLSWITCH_BLE_PING);
-        gatt.setCharacteristicNotification(characteristic, false);
-        gatt.close();
+        if (servicePing != null && gatt != null) {
+            BluetoothGattCharacteristic characteristic = servicePing.getCharacteristic(UUID_KILLSWITCH_BLE_PING);
+            gatt.setCharacteristicNotification(characteristic, false);
+            gatt.close();
+        }
     }
 
     private void reconnect() {
@@ -377,6 +409,9 @@ public class KillswitchBluetoothCircuit implements HardwareCircuit {
     }
 
     private void writeLedState(BluetoothGattCharacteristic cled) {
+        if (gatt == null || servicePing == null){
+            return;
+        }
         synchronized (gatt) {
             boolean result = false;
             int i = 0;

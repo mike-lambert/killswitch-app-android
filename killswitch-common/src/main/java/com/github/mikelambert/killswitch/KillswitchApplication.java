@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 
+import com.github.mikelambert.killswitch.common.CircuitFactory;
 import com.github.mikelambert.killswitch.common.KillswitchDeviceAdministrator;
 
 import org.greenrobot.eventbus.EventBus;
@@ -41,6 +42,7 @@ public class KillswitchApplication extends Application {
     public void onCreate() {
         super.onCreate();
         eventBus = EventBus.getDefault();
+        loadFactories();
         killswitchDeviceAdministrator = new KillswitchDeviceAdministratorImpl(this);
         killswitchDeviceAdministrator.onStarted();
         registerEventsReceiver();
@@ -76,5 +78,14 @@ public class KillswitchApplication extends Application {
             eventsReceiver,
             filter
         );
+    }
+
+    private void loadFactories() {
+        try {
+            Class<CircuitFactory> bfc = (Class<CircuitFactory>) Class.forName("com.github.mikelambert.killswitch.io.ble.KillswitchBluetoothCircuitFactory");
+            Log.v("App", "factory loaded");
+        } catch (ClassNotFoundException e) {
+            Log.w("App", "Factory class not found", e);
+        }
     }
 }

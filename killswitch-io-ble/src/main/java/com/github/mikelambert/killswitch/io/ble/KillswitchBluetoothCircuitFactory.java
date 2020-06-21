@@ -7,7 +7,18 @@ import com.github.mikelambert.killswitch.common.CircuitFactory;
 import com.github.mikelambert.killswitch.common.CircuitFactoryRegistry;
 import com.github.mikelambert.killswitch.common.HardwareCircuit;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class KillswitchBluetoothCircuitFactory implements CircuitFactory {
+    private static KillswitchBluetoothCircuitFactory INSTANCE;
+
+    private final Map<String, HardwareCircuit> circuits;
+
+    private KillswitchBluetoothCircuitFactory() {
+        circuits = new ConcurrentHashMap<>();
+    }
+
     @Override
     public boolean isDescriptorSupported(String descriptor) {
         return true; // TODO: scheme
@@ -15,11 +26,20 @@ public class KillswitchBluetoothCircuitFactory implements CircuitFactory {
 
     @Override
     public HardwareCircuit get(Context context, String descriptor) {
-        return new KillswitchBluetoothCircuit(context, descriptor);
+        synchronized (circuits) {
+            HardwareCircuit circuit = circuits.get(descriptor);
+            if (circuit == null) {
+                Log.v("BLECF", "Instantianting circuit for " + descriptor);
+                circuit = new KillswitchBluetoothCircuit(context, descriptor);
+                circuits.put(descriptor, circuit);
+            }
+            return circuit;
+        }
     }
 
     static {
         Log.v(KillswitchBluetoothCircuitFactory.class.getSimpleName(), "Register BLE circuit factory");
-        CircuitFactoryRegistry.registerFactoryInstance(new KillswitchBluetoothCircuitFactory());
+        INSTANCE = new KillswitchBluetoothCircuitFactory();
+        CircuitFactoryRegistry.registerFactoryInstance(INSTANCE);
     }
 }
